@@ -8,6 +8,7 @@ import { WindEstimator } from './wind.js?v=8';
 import { depthAt, getNav, setHazards } from './depth.js?v=8';
 import { DEFAULT_HAZARDS, hazardAhead } from './hazards.js?v=8';
 import { VENUES, venueAt } from './venues.js?v=8';
+import { learnHtml, labeledBoat, wireLearn } from './learn.js?v=8';
 import { COURSES, ISLANDS, STARTS, buildCourse } from './courses.js?v=8';
 
 const KEY = 'nordstar.race.v1';
@@ -910,6 +911,16 @@ const actions = {
     map.invalidate();
   },
   home: () => { $('home').hidden = false; },
+  openLearn: () => {
+    const el = $('learn');
+    if (!el.dataset.ready) {
+      el.innerHTML = learnHtml(labeledBoat(document.querySelector('.boatArt')?.outerHTML));
+      wireLearn(el);
+      el.dataset.ready = '1';
+    }
+    el.hidden = false;
+  },
+  closeLearn: () => { $('learn').hidden = true; },
   muteAlarm: () => { R.alarmMuteUntil = Date.now() + 120000; toast('Тревога заглушена на 2 минуты'); },
   follow: () => { st.set.follow = !st.set.follow; save(); renderFollow(); if (st.set.follow && R.fix) map.center(R.fix); },
   fullscreen: () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); },

@@ -117,6 +117,7 @@
       <button class="regatta" data-act="pickVenue" data-venue="gocek"><b>Göcek Autumn Race Week &amp; Atatürk Cup</b><span>Göcek Yacht Club · залив Фетхие · дистанции GYC 2021–2026</span></button>
       <button class="regatta" data-act="pickVenue" data-venue="marmaris"><b>Marmaris International Race Week</b><span>Marmaris International Yacht Club (MIYC) · бухта и залив Мармарис</span></button>
     </div>
+    <button class="learnLink" data-act="openLearn">📖 Учебник</button>
     <p id="offlineState" class="homeSub">Офлайн: проверка…</p>
   </div>
 </div>
@@ -127,6 +128,7 @@
   <div id="depthChip" class="chip">глуб. —</div>
   <div id="gpsChip" class="chip">GPS —</div>
   <button id="btnFollow" class="chip on" data-act="follow" title="Следовать за яхтой">⌖ за яхтой</button>
+  <button class="chip" data-act="openLearn" title="Учебник">📖</button>
   <button class="chip" data-act="home" title="Выбор регаты">⌂</button>
   <button class="chip" data-act="fullscreen" title="Во весь экран">⛶</button>
 </header>
@@ -287,6 +289,7 @@
     </section>
   </aside>
 </main>
+<div id="learn" hidden></div>
 <div id="toast" hidden></div>
 
 <script src="vendor/leaflet/leaflet.min.js"></script>
