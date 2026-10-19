@@ -24,16 +24,15 @@ function wlCourse(mid, brg, distNm, laps) {
   return { marks: [W, Lw], course };
 }
 
+// First launch: no course and no line — the start banner walks the crew through setting them up.
 function defaults() {
-  const brg = 240;
-  const c = wlCourse(AREA, brg, 1.0, 2);
   return {
-    pin: G.destination(AREA, brg - 90, 110),
-    rc: G.destination(AREA, brg + 90, 110),
-    marks: c.marks,
-    course: c.course,
+    pin: null,
+    rc: null,
+    marks: [],
+    course: [],
     legIdx: 0,
-    announcedBrg: brg,
+    announcedBrg: null,
     manualWind: { twd: null, tws: null },
     set: { sound: true, voice: true, preset: 300, bowOffset: 7, accelSec: 8, roundRadius: 40, follow: true },
   };
@@ -453,14 +452,21 @@ function renderStart(D) {
       set('vCrossSub', f < 0 ? 'за пином' : f > 1 ? 'за комитетом' : 'от пина');
     } else { set('vCross', '—', ''); set('vCrossSub', 'не идём к линии'); }
   }
-  set('startFoot', `Линия ${ln ? Math.round(ln.L) : '—'} м · ${ln ? deg(ln.brg) : '—'}° · ветер: ${wind.source}`);
+  const src = !st.pin || !st.rc ? 'не задана' : ({ ping: 'пинг', si: 'из гоночной инструкции ≈', tap: 'тапом на карте' }[st.lineSrc] || 'примерная ≈');
+  set('startFoot', `Линия: ${src}${ln ? ` · ${Math.round(ln.L)} м · ${deg(ln.brg)}°` : ''} · ветер: ${wind.source}`);
 }
 
 function startStatus(D) {
   const ln = D.line;
+  if (!timer.running) {
+    // Before the sequence the banner says what to do next.
+    if (!R.fix) return [R.gpsErr ? `1 · GPS: ${R.gpsErr}` : '1 · Ждём позицию GPS…', 'warn'];
+    if (!courseMarks().length) return ['2 · Загрузите дистанцию — вкладка «Маршрут»', 'warn'];
+    if (!st.pin || !st.rc || st.lineSrc !== 'ping') return ['3 · Пингуйте пин и комитет (удерживайте кнопки)', 'warn'];
+    return [ln && ln.d > 0 ? 'Вы на стороне дистанции · по сигналу «Старт»' : 'Готово · по сигналу нажмите «Старт / синхр.»', 'good'];
+  }
   if (!R.fix) return [R.gpsErr ? `GPS: ${R.gpsErr}` : 'Ждём позицию GPS…', 'info'];
   if (!ln) return ['Нет линии — пингуйте пин и комитет', 'info'];
-  if (!timer.running) return [ln.d > 0 ? 'Вы на стороне дистанции' : 'Таймер не запущен', 'info'];
   if (D.rem > 0) {
     if (ln.d > 0) return ['ЗА ЛИНИЕЙ — ВЕРНИТЕСЬ', 'bad blink'];
     const b = ln.burn;
@@ -478,19 +484,34 @@ function startStatus(D) {
 function renderRace(D) {
   const M = D.mark, fix = R.fix;
   const marks = courseMarks();
-  set('vMarkName', M ? M.name + (M.approx ? ' ≈' : '') : 'нет маршрута');
   const legName = { beat: 'лавировка', run: 'фордевинд', reach: 'галфвинд / бакштаг' };
-  set('vLegType', M ? `${legName[M.leg]} · знак ${Math.min(st.legIdx + 1, marks.length + 1)} из ${marks.length + 1}` : '—');
+  const groups = courseGroups();
+  const gi = groups.findIndex((g) => st.legIdx <= g.end);
+  const nextReal = gi >= 0 ? groups[gi] : null;
+  const legNo = `знак ${gi >= 0 ? gi + 1 : groups.length + 1} из ${groups.length + 1}`;
+  if (M) {
+    set('vMarkName', (nextReal && !M.via ? nextReal.name : M.name) + (M.approx ? ' ≈' : ''));
+    set('vLegType', `${legName[M.leg]} · ${legNo}`);
+  } else if (!marks.length) {
+    set('vMarkName', 'Дистанция не загружена');
+    set('vLegType', 'выберите её во вкладке «Маршрут»');
+  } else {
+    // Course is loaded but there is no position yet: show what is next, numbers come with GPS.
+    set('vMarkName', nextReal ? nextReal.name : 'ФИНИШ');
+    set('vLegType', `${legNo} · ${R.gpsErr ? 'GPS: ' + R.gpsErr : 'ждём позицию GPS'}`);
+  }
   set('vBrg', M ? deg(M.brg) : '—');
   const [dv, du] = fmtDist(M?.dst);
   set('vDst', dv); set('vDstU', du);
   set('vEta', M?.etaSec != null ? clock(D.now + M.etaSec * 1000).slice(0, 5) : '—');
   set('vEtaSub', M?.etaSec != null ? `через ${fmtSec(M.etaSec)}` : '');
   set('vSog', fix ? fix.sog.toFixed(1) : '—');
-  set('vTarget', D.target != null ? `/ ${D.target.toFixed(1)}` : '');
-  set('vPerf', D.perf != null ? String(Math.round(D.perf)) : '—', D.perf == null ? '' : D.perf >= 95 ? 'good' : D.perf >= 85 ? '' : 'bad');
+  const windOk = wind.conf >= 2;
+  const perf = windOk && D.perf != null && D.perf <= 150 ? D.perf : null;
+  set('vTarget', windOk && D.target != null ? `/ ${D.target.toFixed(1)}` : '');
+  set('vPerf', perf != null ? String(Math.round(perf)) : '—', perf == null ? '' : perf >= 95 ? 'good' : perf >= 85 ? '' : 'bad');
   set('vTwa', D.twa != null ? String(Math.round(Math.abs(D.twa))) : '—');
-  set('vTwaSub', D.twa != null ? `° ${D.twa >= 0 ? 'правый' : 'левый'}` : '');
+  set('vTwaSub', D.twa != null ? `° ${D.twa >= 0 ? 'правый' : 'левый'}${windOk ? '' : ' ≈'}` : '');
 
   let lay = ['—', 'info'];
   if (M?.lay) {
@@ -581,6 +602,27 @@ function renderMap(D) {
   const showStart = timer.running && D.rem > 0;
   map.setCross(showStart && D.line?.crossLL ? D.line.crossLL : null);
   map.setLaylines(showStart ? [] : D.laylines || []);
+}
+
+// Course as the crew sees it: one entry per rounding (an island's waypoints and routing vias collapse).
+function courseGroups() {
+  const marks = courseMarks();
+  const base = (m) => m.name.replace(/ \d+\/\d+$/, '');
+  const out = [];
+  for (let i = 0; i < marks.length; i++) {
+    if (marks[i].via) continue;
+    const g = { name: base(marks[i]), start: i, end: i };
+    for (let k = i + 1; k < marks.length; k++) {
+      if (marks[k].via) continue;
+      if (marks[i].wp && marks[k].wp && base(marks[k]) === g.name && / \d+\/\d+$/.test(marks[k].name) && !/ 1\/\d+$/.test(marks[k].name)) g.end = k;
+      else break;
+    }
+    // Vias leading to this rounding belong to it.
+    while (g.start > 0 && marks[g.start - 1].via) g.start--;
+    out.push(g);
+    i = g.end;
+  }
+  return out;
 }
 
 function routePts() {
@@ -706,8 +748,8 @@ function setPlace(place, text) {
 function handlePlace(p) {
   if (!R.place) { showDepth(p); return; }
   const pl = R.place;
-  if (pl.what === 'pin') st.pin = p;
-  else if (pl.what === 'rc') st.rc = p;
+  if (pl.what === 'pin') { st.pin = p; st.lineSrc = 'tap'; }
+  else if (pl.what === 'rc') { st.rc = p; st.lineSrc = 'tap'; }
   else if (pl.what === 'mark') { const m = st.marks.find((x) => x.id === pl.id); if (m) Object.assign(m, p, { approx: false }); }
   else if (pl.what === 'newmark') addMark(p);
   setPlace(null);
@@ -721,12 +763,12 @@ function showDepth(p) {
 }
 
 let toastT = null;
-function toast(msg) {
+function toast(msg, ms = 2200) {
   const el = $('toast');
   el.textContent = msg;
   el.hidden = false;
   clearTimeout(toastT);
-  toastT = setTimeout(() => (el.hidden = true), 2200);
+  toastT = setTimeout(() => (el.hidden = true), ms);
 }
 
 function needFix() { if (!R.fix) { toast('Нет позиции GPS'); return false; } return true; }
@@ -772,8 +814,8 @@ const actions = {
   tminus: () => { timer.shift(-60); saveRace(); },
   tplus: () => { timer.shift(60); saveRace(); },
   treset: () => { if (confirm('Сбросить таймер?')) { timer.reset(); timer.preset = st.set.preset; resetRace(); saveRace(); } },
-  pingPin: () => { if (!needFix()) return; st.pin = { lat: R.fix.lat, lon: R.fix.lon }; save(); horn.beep(1400, 0.1); toast('Пин записан'); },
-  pingRc: () => { if (!needFix()) return; st.rc = { lat: R.fix.lat, lon: R.fix.lon }; save(); horn.beep(1400, 0.1); toast('Комитет записан'); },
+  pingPin: () => { if (!needFix()) return; st.pin = { lat: R.fix.lat, lon: R.fix.lon }; R.pinged = { ...R.pinged, pin: true }; if (R.pinged.rc) st.lineSrc = 'ping'; save(); horn.beep(1400, 0.1); toast('Пин записан'); },
+  pingRc: () => { if (!needFix()) return; st.rc = { lat: R.fix.lat, lon: R.fix.lon }; R.pinged = { ...R.pinged, rc: true }; if (R.pinged.pin) st.lineSrc = 'ping'; save(); horn.beep(1400, 0.1); toast('Комитет записан'); },
   placePin: () => setPlace({ what: 'pin' }, 'Тапните по карте: ПИН'),
   placeRc: () => setPlace({ what: 'rc' }, 'Тапните по карте: КОМИТЕТ'),
   cancelPlace: () => setPlace(null),
@@ -809,9 +851,10 @@ const actions = {
     if (!def) return;
     if (def.kind === 'coastal') {
       const c = buildCourse(def, { nav: await getNav(def.venue) });
-      Object.assign(st, { marks: c.marks, course: c.course, legIdx: 0, islands: c.islands, pin: { ...c.start.pin }, rc: { ...c.start.rc }, announcedBrg: null });
+      Object.assign(st, { marks: c.marks, course: c.course, legIdx: 0, islands: c.islands, pin: { ...c.start.pin }, rc: { ...c.start.rc }, announcedBrg: null, lineSrc: 'si' });
+      R.pinged = {};
       applyPriors();
-      toast(`${def.name}: ${def.nm} nm`);
+      toast(`Загружено: ${def.name}, ${def.nm} nm. Линия старта примерная — на воде пингуйте пин и комитет`, 5000);
       map.center(G.midpoint(st.pin, st.rc), 13);
     } else {
       const v = readBrgInput(); if (!v) return;
