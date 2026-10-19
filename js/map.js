@@ -3,8 +3,8 @@
 import { VENUES } from './venues.js?v=8';
 
 const toLL = (p) => [p.lat, p.lon];
-// Start → finish: teal, blue, violet, magenta, orange.
-const STOPS = [[0, 179, 164], [47, 123, 255], [138, 63, 252], [224, 41, 143], [255, 106, 0]];
+// Start → finish: blue to violet (no red, no green).
+const STOPS = [[30, 110, 255], [70, 80, 240], [112, 58, 236], [150, 45, 230]];
 function routeColor(t) {
   const x = Math.min(0.9999, Math.max(0, t)) * (STOPS.length - 1);
   const i = Math.floor(x), f = x - i;
@@ -143,6 +143,8 @@ export class RaceMap {
       for (let i = 1; i < pts.length; i++) d.push(d[i - 1] + this.map.distance(toLL(pts[i - 1]), toLL(pts[i])));
       const total = d[d.length - 1] || 1;
       const STEP = 120; // m per colour step
+      // Light casing under the gradient so a blue line still reads over blue water.
+      L.polyline(pts.map(toLL), { color: '#ffffff', weight: 7, opacity: 0.85, interactive: false }).addTo(this.route);
       for (let i = 1; i < pts.length; i++) {
         const n = Math.max(1, Math.ceil((d[i] - d[i - 1]) / STEP));
         for (let k = 0; k < n; k++) {
@@ -150,7 +152,7 @@ export class RaceMap {
           const a = [pts[i - 1].lat + (pts[i].lat - pts[i - 1].lat) * t0, pts[i - 1].lon + (pts[i].lon - pts[i - 1].lon) * t0];
           const b = [pts[i - 1].lat + (pts[i].lat - pts[i - 1].lat) * t1, pts[i - 1].lon + (pts[i].lon - pts[i - 1].lon) * t1];
           const t = (d[i - 1] + (d[i] - d[i - 1]) * (k + 0.5) / n) / total;
-          L.polyline([a, b], { color: routeColor(t), weight: 4, opacity: 0.95, lineCap: 'butt', interactive: false }).addTo(this.route);
+          L.polyline([a, b], { color: routeColor(t), weight: 4, opacity: 1, lineCap: 'butt', interactive: false }).addTo(this.route);
         }
       }
     }

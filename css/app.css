@@ -176,3 +176,5 @@ table.polar th { color: var(--muted); font-weight: 500; }
 .regatta b { font-size: 22px; }
 .regatta span { font-size: 14px; color: var(--muted); font-weight: 500; }
 .regatta:active { border-color: var(--accent); }
+.brand { white-space: nowrap; }
+@media (max-width: 900px) { .brand span { display: none; } #topbar { gap: 6px; } .chip { padding: 5px 8px; font-size: 12px; } }

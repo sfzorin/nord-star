@@ -87,14 +87,18 @@ mast = (f'M{f(mx)},{f(Y(DECK_AT_MAST))} L{f(mx)},{f(Y(head_h))} L{f(mx - 3.2)},{
         f'L{f(mx - 5.4)},{f(Y(hounds_h))} L{f(mx - 5.6)},{f(Y(DECK_AT_MAST))} Z')
 spreaders = ''.join(f'<line x1="{f(mx - 2)}" y1="{f(Y(h))}" x2="{f(mx - 2 - 0.42 * S)}" y2="{f(Y(h) + 1.5)}"/>'
                     for h in (DECK_AT_MAST + 5.7, DECK_AT_MAST + 10.4))
-chain = X(4.45)
-bs_split = (X(9.5), Y(sheer(9.5) + 2.0))
-rigging = (f'<line x1="{f(X(-0.06))}" y1="{f(Y(SHEER_BOW + 0.05))}" x2="{f(mx)}" y2="{f(Y(hounds_h))}" stroke-width="1.4"/>'
-           f'<line x1="{f(mx - 4)}" y1="{f(Y(hounds_h))}" x2="{f(chain)}" y2="{f(Y(sheer(4.45)))}" opacity="0.6"/>'
-           f'<line x1="{f(mx - 4)}" y1="{f(Y(DECK_AT_MAST + 10.4))}" x2="{f(chain + 4)}" y2="{f(Y(sheer(4.45)))}" opacity="0.45"/>'
-           f'<line x1="{f(mx - 3)}" y1="{f(Y(head_h))}" x2="{f(bs_split[0])}" y2="{f(bs_split[1])}"/>'
-           f'<line x1="{f(bs_split[0])}" y1="{f(bs_split[1])}" x2="{f(X(LOA - 0.12))}" y2="{f(Y(SHEER_AFT))}"/>'
-           f'<line x1="{f(bs_split[0])}" y1="{f(bs_split[1])}" x2="{f(X(LOA - 0.5))}" y2="{f(Y(sheer(LOA - 0.5)))}" opacity="0.6"/>')
+# Shrouds: swept spreaders put the chainplates ~0.6 m aft of the mast. Cap shrouds run from the hounds over both
+# spreader tips; intermediates from the upper spreader root over the lower tip; lowers from under the lower spreader.
+sp_lo, sp_hi = DECK_AT_MAST + 5.7, DECK_AT_MAST + 10.4
+tip = lambda h: (mx - 2 - 0.42 * S, Y(h) + 1.5)
+chain = (X(4.7), Y(sheer(4.7)))
+lt, ut = tip(sp_lo), tip(sp_hi)
+# Forestay and backstay are on the centreline (behind the sails); shrouds are at the rail, nearer the viewer.
+rigging = (f'<line x1="{f(X(0.02))}" y1="{f(Y(SHEER_BOW + 0.05))}" x2="{f(mx)}" y2="{f(Y(hounds_h))}" stroke-width="1.4"/>'
+           f'<line x1="{f(mx - 3)}" y1="{f(Y(head_h))}" x2="{f(X(LOA - 0.06))}" y2="{f(Y(SHEER_AFT + 0.02))}" stroke-width="1.1"/>')
+shrouds = (f'<polyline points="{f(mx - 4)},{f(Y(hounds_h))} {f(ut[0])},{f(ut[1])} {f(lt[0])},{f(lt[1])} {f(chain[0])},{f(chain[1])}" stroke="#8fa3b4" stroke-width="1.2"/>'
+           f'<polyline points="{f(mx - 4)},{f(Y(sp_hi) - 1)} {f(lt[0] + 1.5)},{f(lt[1])} {f(chain[0] + 1)},{f(chain[1])}" stroke="#8fa3b4" stroke-width="1"/>'
+           f'<line x1="{f(mx - 4)}" y1="{f(Y(sp_lo) - 1)}" x2="{f(X(4.45))}" y2="{f(Y(sheer(4.45)))}" stroke="#8fa3b4" stroke-width="1"/>')
 boom_x0, boom_x1 = mx - 5.4, mx - 5.4 - E * S
 boom = (f'M{f(boom_x0)},{f(Y(boom_h) - 2)} L{f(boom_x1)},{f(Y(boom_h) - 1.5)} '
         f'L{f(boom_x1 + 2)},{f(Y(boom_h) + 3)} L{f(boom_x0)},{f(Y(boom_h) + 3.5)} Z')
@@ -138,6 +142,10 @@ for t in (0.3, 0.55, 0.8):
     jdraft += f'<path d="M{f(ax)},{f(ay)} Q{f((ax + bx) / 2)},{f((ay + by) / 2 + 7)} {f(bx)},{f(by)}"/>'
 jsheet = f'M{f(j_clew[0])},{f(j_clew[1])} L{f(X(6.1))},{f(Y(sheer(6.1) + 0.05))}'
 
+# Fixed bowsprit for the asymmetric: tack point 1.11 m ahead of the stem (TPS 5.17 − J 4.06).
+sprit = (f'M{P(0.45, SHEER_BOW + 0.03)} L{P(-1.08, SHEER_BOW + 0.08)} L{P(-1.08, SHEER_BOW + 0.13)} '
+         f'L{P(0.45, SHEER_BOW + 0.1)} Z')
+
 # ---------------------------------------------------------------- deck gear
 stations = [1.2, 2.8, 4.4, 6.0, 7.6, 8.9]
 stanch = ''.join(f'<line x1="{f(X(m))}" y1="{f(Y(sheer(m)))}" x2="{f(X(m))}" y2="{f(Y(sheer(m) + 0.62))}"/>' for m in stations)
@@ -148,25 +156,28 @@ pulpit = f'M{P(0.02, SHEER_BOW)} L{P(0.0, SHEER_BOW + 0.62)} Q{P(0.05, SHEER_BOW
 pushpit = f'M{P(LOA - 0.05, SHEER_AFT)} L{P(LOA - 0.05, SHEER_AFT + 0.62)} L{P(9.6, sheer(9.6) + 0.62)} L{P(9.55, sheer(9.55))}'
 
 
-def wheel(m, near=True):
-    """Stainless helm wheel seen from the side with a little perspective, on a pedestal just forward of it."""
-    cx, cy = X(m), Y(sheer(m) + 0.36)
-    r, rx = 0.46 * S, 0.46 * S * 0.42
-    rim, spoke, op = ('#d3dce4', '#b7c4cf', 1.0) if near else ('#9fb0bf', '#8a9bab', 0.75)
-    px = cx + 0.16 * S                                          # pedestal forward of the wheel
-    g = [f'<g opacity="{op}">',
-         f'<path d="M{f(px - 1.8)},{f(Y(sheer(m) - 0.02))} L{f(px - 1.1)},{f(cy - 2)} L{f(px + 1.1)},{f(cy - 2)} L{f(px + 1.8)},{f(Y(sheer(m) - 0.02))} Z" fill="#8e9daa"/>',
-         f'<rect x="{f(px - 1)}" y="{f(cy - 7)}" width="5" height="7" rx="1.2" fill="#26323d"/>',
-         f'<line x1="{f(cx)}" y1="{f(cy)}" x2="{f(px)}" y2="{f(cy - 1.5)}" stroke="#8e9daa" stroke-width="1.6"/>']
-    for k in range(6):
-        a = math.radians(30 + 60 * k)
-        g.append(f'<line x1="{f(cx)}" y1="{f(cy)}" x2="{f(cx + rx * math.cos(a))}" y2="{f(cy + r * math.sin(a))}" stroke="{spoke}" stroke-width="0.8"/>')
-    g.append(f'<ellipse cx="{f(cx)}" cy="{f(cy)}" rx="{f(rx)}" ry="{f(r)}" fill="none" stroke="{rim}" stroke-width="1.8"/>')
-    g.append(f'<circle cx="{f(cx)}" cy="{f(cy)}" r="1.8" fill="{rim}"/></g>')
-    return ''.join(g)
+def wheel(m):
+    """Helm wheel in true profile: it stands across the boat, so it is seen edge-on (the twin hides behind it)."""
+    cx, cy, r = X(m), Y(sheer(m) + 0.36), 0.46 * S
+    px = cx + 0.2 * S                                   # pedestal just forward of the wheel
+    return (f'<path d="M{f(px - 2)},{f(Y(sheer(m) - 0.02))} L{f(px - 1.2)},{f(cy - 3)} L{f(px + 1.2)},{f(cy - 3)} L{f(px + 2)},{f(Y(sheer(m) - 0.02))} Z" fill="#8e9daa"/>'
+            f'<rect x="{f(px - 3)}" y="{f(cy - 9)}" width="7" height="6.5" rx="1.4" fill="#26323d"/>'
+            f'<line x1="{f(cx)}" y1="{f(cy)}" x2="{f(px)}" y2="{f(cy - 2)}" stroke="#8e9daa" stroke-width="2"/>'
+            f'<rect x="{f(cx - 1.6)}" y="{f(cy - 2.4)}" width="3.6" height="4.8" rx="1" fill="#b7c4cf"/>'
+            f'<rect x="{f(cx - 1.4)}" y="{f(cy - r)}" width="2.8" height="{f(2 * r)}" rx="1.4" fill="#d3dce4" stroke="#8e9daa" stroke-width="0.5"/>')
 
 
-wheels = wheel(9.72, near=False) + wheel(9.32)
+def winch(m, h, size=0.22):
+    """Self-tailing winch in profile: drum on a flared base with the stripper on top."""
+    x, y = X(m), Y(h)
+    w, hh = size * S, size * S * 0.95
+    return (f'<path d="M{f(x - w / 2)},{f(y)} L{f(x - w * 0.36)},{f(y - hh * 0.75)} L{f(x + w * 0.36)},{f(y - hh * 0.75)} L{f(x + w / 2)},{f(y)} Z" fill="#c9d3dc" stroke="#7f8f9e" stroke-width="0.5"/>'
+            f'<rect x="{f(x - w * 0.4)}" y="{f(y - hh)}" width="{f(w * 0.8)}" height="{f(hh * 0.27)}" rx="1.2" fill="#2b3640"/>')
+
+
+wheels = wheel(9.45)
+winches = (winch(8.45, sheer(8.45) + 0.06) + winch(7.55, sheer(7.55) + 0.245, 0.17) + winch(7.25, sheer(7.25) + 0.24, 0.15))
+coaming = f'M{P(8.07, sheer(8.07) + 0.08)} L{P(9.0, sheer(9.0) + 0.06)} Q{P(9.15, sheer(9.15) + 0.06)} {P(9.2, sheer(9.2))}'
 grid = (''.join(f'<line x1="{x:.0f}" y1="30" x2="{x:.0f}" y2="652"/>' for x in [STEM - k * S for k in range(-1, 14)])
         + ''.join(f'<line x1="{f(X(12.5))}" y1="{y:.0f}" x2="{f(X(-1))}" y2="{y:.0f}"/>' for y in [WL - k * S for k in range(-3, 18)]))
 mono = 'ui-monospace,Menlo,monospace'
@@ -204,6 +215,7 @@ svg = f'''<svg class="boatArt" viewBox="0 0 960 680" preserveAspectRatio="xMidYM
       <path d="{mast}" fill="#c3ced7"/>
       <g stroke="#c3ced7" stroke-width="2.2" stroke-linecap="round">{spreaders}</g>
       <path d="{boom}" fill="#b9c5cf"/>
+      <g fill="none" stroke-linejoin="round">{shrouds}</g>
       <path d="{vang}" stroke="#9db4c6" stroke-width="2"/>
       <path d="{mainsheet}" stroke="#9db4c6" stroke-width="0.9"/>
 
@@ -223,9 +235,13 @@ svg = f'''<svg class="boatArt" viewBox="0 0 960 680" preserveAspectRatio="xMidYM
       <path d="{roof_port}" fill="#26323d" opacity="0.85"/>
       <path d="{handrail}" fill="none" stroke="#a9b8c5" stroke-width="1"/>
       <g stroke="#9db4c6" stroke-width="1" fill="none">{stanch}{lifelines}<path d="{pulpit}" stroke-width="1.4"/><path d="{pushpit}" stroke-width="1.4"/></g>
+      <path d="{coaming}" fill="none" stroke="#c3ced7" stroke-width="2.4"/>
+      {winches}
       {wheels}
-      <path d="M{P(0, SHEER_BOW + 0.02)} L{P(-0.28, SHEER_BOW + 0.04)} L{P(-0.26, SHEER_BOW - 0.08)} L{P(0, SHEER_BOW - 0.1)} Z" fill="#c3ced7"/>
-      <rect x="{f(X(0.12))}" y="{f(Y(SHEER_BOW + 0.22))}" width="7" height="6" rx="2" fill="#9db4c6"/>
+      <path d="{sprit}" fill="#2f3b47" stroke="#56636f" stroke-width="0.6"/>
+      <circle cx="{f(X(-1.08))}" cy="{f(Y(SHEER_BOW + 0.105))}" r="2.2" fill="#c3ced7"/>
+      <path d="M{P(-0.02, SHEER_BOW - 0.02)} L{P(-0.32, SHEER_BOW - 0.06)} L{P(-0.3, SHEER_BOW - 0.16)} L{P(-0.02, SHEER_BOW - 0.14)} Z" fill="#c3ced7"/>
+      <circle cx="{f(X(-0.3))}" cy="{f(Y(SHEER_BOW - 0.11))}" r="2.3" fill="#8e9daa"/>
 
       <path d="{keel}" fill="url(#bottom)" stroke="#2a4a66" stroke-width="0.8"/>
       <path d="{bulb}" fill="#132a42" stroke="#2a4a66" stroke-width="0.8"/>
