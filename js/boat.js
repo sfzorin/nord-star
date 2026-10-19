@@ -1,0 +1,17 @@
+export const BOAT = {
+  name: 'NORD STAR',
+  sail: 'RUS 3635',
+  design: 'Dufour 36 Performance (2.20 m draft)',
+  year: '2012, age date 2013',
+  loa: 10.99,
+  lwl: 9.97,
+  beam: 3.61,
+  draft: 2.2,
+  displacement: 5950,
+  rig: 'Bermudian sloop, aluminium mast',
+  ircCert: '43351, valid until 31 Dec 2026',
+  tcc: 0.997,
+  tccNonSpin: 0.994,
+  crew: '8 (max 680 kg)',
+  authority: 'TAYK (Turkey)',
+};
