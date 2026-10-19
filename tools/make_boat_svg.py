@@ -182,11 +182,15 @@ grid = (''.join(f'<line x1="{x:.0f}" y1="30" x2="{x:.0f}" y2="652"/>' for x in [
         + ''.join(f'<line x1="{f(X(12.5))}" y1="{y:.0f}" x2="{f(X(-1))}" y2="{y:.0f}"/>' for y in [WL - k * S for k in range(-3, 18)]))
 mono = 'ui-monospace,Menlo,monospace'
 dim = lambda x1, y1, x2, y2: f'<line x1="{f(x1)}" y1="{f(y1)}" x2="{f(x2)}" y2="{f(y2)}"/>'
+# Everything standing in the cockpit is hidden below the deck edge by the topsides.
+above_sheer = (f'M{P(LOA + 0.3, SHEER_AFT)} ' + ' '.join(f'L{P(m, sheer(m))}' for m in sheer_pts)
+               + f' L{P(-0.3, SHEER_BOW)} L{P(-0.3, 25)} L{P(LOA + 0.3, 25)} Z')
 sheer_line = f'M{P(LOA, SHEER_AFT)} ' + ' '.join(f'L{P(m, sheer(m))}' for m in sheer_pts) + f' L{P(0, SHEER_BOW)}'
 
 svg = f'''<svg class="boatArt" viewBox="0 0 960 680" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Профиль NORD STAR, RUS 3635, Dufour 36 Performance">
       <defs>
         <clipPath id="hullClip"><path d="{hull}"/></clipPath>
+        <clipPath id="deckClip"><path d="{above_sheer}"/></clipPath>
         <linearGradient id="topsides" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.7" stop-color="#eef2f6"/><stop offset="1" stop-color="#d9e1e9"/></linearGradient>
         <linearGradient id="bottom" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b3550"/><stop offset="1" stop-color="#10233a"/></linearGradient>
         <linearGradient id="mainG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e6ecf1"/><stop offset="0.35" stop-color="#ffffff"/><stop offset="1" stop-color="#e1e8ee"/></linearGradient>
@@ -234,10 +238,10 @@ svg = f'''<svg class="boatArt" viewBox="0 0 960 680" preserveAspectRatio="xMidYM
       <path d="{roof_win}" fill="#26323d"/>
       <path d="{roof_port}" fill="#26323d" opacity="0.85"/>
       <path d="{handrail}" fill="none" stroke="#a9b8c5" stroke-width="1"/>
-      <g stroke="#9db4c6" stroke-width="1" fill="none">{stanch}{lifelines}<path d="{pulpit}" stroke-width="1.4"/><path d="{pushpit}" stroke-width="1.4"/></g>
       <path d="{coaming}" fill="none" stroke="#c3ced7" stroke-width="2.4"/>
       {winches}
-      {wheels}
+      <g clip-path="url(#deckClip)">{wheels}</g>
+      <g stroke="#9db4c6" stroke-width="1" fill="none">{stanch}{lifelines}<path d="{pulpit}" stroke-width="1.4"/><path d="{pushpit}" stroke-width="1.4"/></g>
       <path d="{sprit}" fill="#2f3b47" stroke="#56636f" stroke-width="0.6"/>
       <circle cx="{f(X(-1.08))}" cy="{f(Y(SHEER_BOW + 0.105))}" r="2.2" fill="#c3ced7"/>
       <path d="M{P(-0.02, SHEER_BOW - 0.02)} L{P(-0.32, SHEER_BOW - 0.06)} L{P(-0.3, SHEER_BOW - 0.16)} L{P(-0.02, SHEER_BOW - 0.14)} Z" fill="#c3ced7"/>
