@@ -3,7 +3,7 @@
   "short_name": "Nord Star",
   "start_url": "./index.html",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#050d16",
   "theme_color": "#050d16",
   "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]

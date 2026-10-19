@@ -1,11 +1,5 @@
-// Depth from EMODnet Bathymetry REST (for Turkey it serves GEBCO 2024, ~100–450 m grid).
+// Depth from the venues' own model (tools/make_depth.py: EMODnet/GEBCO grid + OSM coastline).
 // Coarse: good for "deep water / getting shallow", not for rocks or harbour entrances.
-
-const API = 'https://rest.emodnet-bathymetry.eu/depth_sample?geom=';
-const cache = new Map(); // key: lat/lon rounded to ~100 m → depth (m, positive) | null
-const pending = new Map();
-
-const key = (p) => `${p.lat.toFixed(3)},${p.lon.toFixed(3)}`;
 
 // Offline lookup per venue from <venue>/depth_lut.png (same model as the map overlay).
 import { VENUES, venueAt } from './venues.js?v=8';
@@ -49,22 +43,9 @@ export async function depthAt(p) {
 async function modelDepth(p) {
   await lutReady;
   const lut = luts[venueAt(p)];
-  if (lut) { const v = fromLut(lut, p); if (v !== undefined) return v; }
-  const k = key(p);
-  if (cache.has(k)) return cache.get(k);
-  if (pending.has(k)) return pending.get(k);
-  const req = fetch(`${API}POINT(${p.lon.toFixed(5)}%20${p.lat.toFixed(5)})`)
-    .then((r) => (r.ok ? r.json() : null))
-    .then((j) => {
-      const v = j && Number.isFinite(j.smoothed ?? j.avg) ? -(j.smoothed ?? j.avg) : null;
-      const d = v != null && v > 0 ? v : v != null ? 0 : null; // ≤ 0 → land / drying
-      cache.set(k, d);
-      return d;
-    })
-    .catch(() => null)
-    .finally(() => pending.delete(k));
-  pending.set(k, req);
-  return req;
+  if (!lut) return null; // outside the charted venues: unknown (offline model only)
+  const v = fromLut(lut, p);
+  return v === undefined ? null : v;
 }
 
 export const SOURCE = 'модель: EMODnet/GEBCO 2024 + берег OSM, сглажено';

@@ -209,3 +209,80 @@ button.hold.holding i { width: 100%; transition: width 0.7s linear; }
 #libInfo { font-size: 12px; line-height: 1.3; }
 .setgrid .set { min-height: 36px; }
 [data-pane=boat] > .foot { font-size: 11px; }
+
+/* ---------- phones ---------- */
+body { grid-template-columns: minmax(0, 1fr); }
+#topbar { min-width: 0; overflow: hidden; }
+#toast { max-width: 92vw; text-align: center; }
+@media (max-width: 600px) {
+  body { grid-template-rows: 38px 1fr; }
+  #topbar { gap: 4px; padding: 0 6px; }
+  #topbar .brand { display: none; }
+  #clock { margin-left: 0; font-size: 15px; }
+  #windChip { margin-left: auto; }
+  .chip { padding: 3px 6px; font-size: 11px; border-radius: 12px; }
+  #btnFollow { font-size: 0; padding: 3px 7px; }
+  #btnFollow::before { content: '⌖'; font-size: 14px; }
+  main { grid-template-columns: 1fr !important; grid-template-rows: 33% 67% !important; }
+  #panel { border-left: 0; border-top: 1px solid var(--border); }
+  #tabs { padding: 4px; gap: 2px; }
+  #tabs button { min-height: 38px; font-size: 13px; padding: 2px; }
+  .pane { padding: 6px; gap: 6px; }
+  .timer { font-size: clamp(52px, 19vw, 84px); }
+  .timerSide { width: 52px; }
+  .timerSide .mini { min-height: 30px; font-size: 13px; }
+  .lbl, .tile label { font-size: 11px; }
+  .status { font-size: 15px; padding: 7px; }
+  .grid { gap: 4px; }
+  .tile { padding: 3px 6px 5px; border-radius: 8px; }
+  .tile output { font-size: clamp(20px, 7vw, 28px); }
+  .tile small { font-size: 11px; }
+  .tile.sm output { font-size: clamp(16px, 5.5vw, 22px); }
+  button { min-height: 46px; font-size: 14px; border-radius: 9px; }
+  button.big2 { font-size: 15px; }
+  .foot { font-size: 11px; }
+  .markName { font-size: 19px; }
+  .markHead .mini { width: 42px; min-height: 40px; }
+  .row2 { flex-wrap: wrap; }
+  .row2 #venue, .row2 #libCourse { flex: 1 1 100%; width: 100%; }
+  .entry input { width: 56px; font-size: 18px; }
+  .kv { grid-template-columns: auto 1fr; }
+  .setgrid { gap: 0 10px; }
+  .setgrid .set input[type=number] { width: 64px; }
+  .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #hist { height: 90px; }
+  #windRose { padding: 3px 6px; min-width: 70px; }
+  #windArrow { font-size: 24px; }
+  .leaflet-control-zoom, .leaflet-control-layers { transform: scale(0.85); transform-origin: top left; }
+  #shallowWarn { font-size: 15px; top: 8px; padding: 8px 12px; }
+  .card { padding: 6px; gap: 4px; }
+  .set { min-height: 36px; }
+  .setgrid .set { min-height: 34px; }
+  [data-pane=boat] > .foot { font-size: 10px; }
+}
+/* phone held sideways: very little height */
+@media (max-height: 500px) and (orientation: landscape) {
+  body { grid-template-rows: 32px 1fr; }
+  #topbar .brand { display: none; }
+  #clock { margin-left: 0; font-size: 15px; }
+  #windChip { margin-left: auto; }
+  .chip { padding: 2px 6px; font-size: 11px; }
+  main { grid-template-columns: minmax(0, 1fr) minmax(0, 54%) !important; }
+  #tabs { padding: 3px; }
+  #tabs button { min-height: 30px; font-size: 13px; }
+  .pane { gap: 4px; padding: 4px; }
+  #timerSub, .pane > .foot, .tile small.blk { display: none; }
+  .timer { font-size: 44px; }
+  .timerSide .mini { min-height: 24px; font-size: 12px; }
+  .status { font-size: 13px; padding: 4px; }
+  .grid { gap: 3px; }
+  .tile { padding: 2px 6px 3px; }
+  .tile label { font-size: 10px; }
+  .tile output { font-size: 19px; }
+  .tile.sm output { font-size: 16px; }
+  button { min-height: 36px; font-size: 13px; }
+  .markHead { padding: 3px; }
+  .markName { font-size: 17px; }
+  .markHead .mini { min-height: 32px; }
+  #hist { height: 70px; }
+}

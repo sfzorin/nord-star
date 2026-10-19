@@ -136,12 +136,7 @@ function pollDepth(fix) {
   d.t = fix.t;
   depthAt(fix).then((v) => (d.here = v));
   const ahead = G.destination(fix, fix.cog, Math.max(200, fix.sog * G.KN * 120));
-  depthAt(ahead).then((v) => {
-    d.ahead = v;
-    if (v != null && v < SHALLOW) {
-      if (!d.warned) { horn.beep(500, 0.5); horn.say('Мелко впереди'); d.warned = true; }
-    } else d.warned = false;
-  });
+  depthAt(ahead).then((v) => (d.ahead = v));
 }
 
 // ---------------------------------------------------------------- geometry helpers
@@ -388,31 +383,42 @@ function render(D) {
   set('clock', clock(D.now));
 
   // gps chip
+  const narrow = innerWidth < 600; // phone: short chip texts so the top bar fits
   if (R.gpsErr && !fix) set('gpsChip', 'GPS ✕', 'bad');
-  else if (!fix) set('gpsChip', 'GPS: поиск…', 'warn');
-  else set('gpsChip', `GPS ±${Math.round(fix.acc)} м`, fix.acc < 15 ? 'good' : 'warn');
+  else if (!fix) set('gpsChip', narrow ? 'GPS…' : 'GPS: поиск…', 'warn');
+  else set('gpsChip', narrow ? `±${Math.round(fix.acc)}м` : `GPS ±${Math.round(fix.acc)} м`, fix.acc < 15 ? 'good' : 'warn');
 
   // wind chip + rose
   const confTxt = ['', '≈', '~', ''][wind.conf] || '';
-  set('windChip', D.twd == null ? 'ветер —' : `ветер ${confTxt}${deg(D.twd)}° ${Math.round(D.tws)} kn`, wind.conf >= 3 ? 'good' : wind.conf === 2 ? 'warn' : '');
+  set('windChip', D.twd == null ? 'ветер —' : `${narrow ? '' : 'ветер '}${confTxt}${deg(D.twd)}° ${Math.round(D.tws)}${narrow ? '' : ' '}kn`, wind.conf >= 3 ? 'good' : wind.conf === 2 ? 'warn' : '');
   if (D.twd != null) {
     $('windArrow').style.transform = `rotate(${D.twd + 90}deg)`;
     set('windRoseTxt', `${deg(D.twd)}° · ${Math.round(D.tws)} kn`);
   }
 
   const dp = R.depth;
-  if (dp.here == null) set('depthChip', 'глуб. —', '');
-  else set('depthChip', `глуб. ${dp.here < 1 ? '<1' : Math.round(dp.here)} м${dp.ahead != null ? ` · впереди ${Math.round(dp.ahead)}` : ''}`,
+  if (dp.here == null) set('depthChip', narrow ? '— м' : 'глуб. —', '');
+  else set('depthChip', narrow ? `${dp.here < 1 ? '<1' : Math.round(dp.here)} м` : `глуб. ${dp.here < 1 ? '<1' : Math.round(dp.here)} м${dp.ahead != null ? ` · впереди ${Math.round(dp.ahead)}` : ''}`,
     dp.here < SHALLOW || (dp.ahead != null && dp.ahead < SHALLOW) ? 'bad' : dp.here < 10 || (dp.ahead != null && dp.ahead < 10) ? 'warn' : '');
-  const hz = hazardAhead(st.hazards, fix);
-  const shallow = fix && dp.ahead != null && dp.ahead < SHALLOW;
-  $('shallowWarn').hidden = !hz && !shallow;
+  // Alarms only for a boat under way on the water inside a charted venue: ashore, at the dock or
+  // far from the venues the "ahead" point is land and would alarm for nothing.
+  const underway = fix && fix.sog > 1.5 && venueAt(fix);
+  const hzRaw = fix ? hazardAhead(st.hazards, fix) : null;
+  const hz = hzRaw && (hzRaw.inside || underway) ? hzRaw : null;
+  const shallow = underway && dp.here != null && dp.here >= SHALLOW && dp.ahead != null && dp.ahead < SHALLOW;
+  const muted = D.now < (R.alarmMuteUntil || 0);
+  $('shallowWarn').hidden = muted || (!hz && !shallow);
   if (hz) {
     set('shallowWarn', hz.inside ? `В ЗОНЕ МЕЛИ! ${hz.h.name} — ${hz.h.note || 'выходи'}` : `МЕЛЬ ПО КУРСУ ${Math.round(hz.dist)} м · ${hz.h.note || hz.h.name}`);
-    if (!R.hazWarned || R.hazWarned !== hz.h.id) { horn.beep(500, 0.6); horn.say(hz.inside ? 'Зона мели' : 'Мель по курсу'); R.hazWarned = hz.h.id; }
+    if (!muted && R.hazWarned !== hz.h.id) { horn.beep(500, 0.6); horn.say(hz.inside ? 'Зона мели' : 'Мель по курсу'); R.hazWarned = hz.h.id; }
   } else {
     R.hazWarned = null;
-    if (shallow) set('shallowWarn', `МЕЛКО ВПЕРЕДИ · ${dp.ahead < 1 ? 'берег/<1' : Math.round(dp.ahead)} м · осадка ${BOAT.draft} м`);
+  }
+  if (shallow) {
+    if (!hz) set('shallowWarn', `МЕЛКО ВПЕРЕДИ · ${dp.ahead < 1 ? 'берег' : Math.round(dp.ahead) + ' м'} · осадка ${BOAT.draft} м`);
+    if (!muted && !dp.warned) { horn.beep(500, 0.5); horn.say('Мелко впереди'); dp.warned = true; }
+  } else {
+    dp.warned = false;
   }
 
   renderStart(D);
@@ -904,6 +910,7 @@ const actions = {
     map.invalidate();
   },
   home: () => { $('home').hidden = false; },
+  muteAlarm: () => { R.alarmMuteUntil = Date.now() + 120000; toast('Тревога заглушена на 2 минуты'); },
   follow: () => { st.set.follow = !st.set.follow; save(); renderFollow(); if (st.set.follow && R.fix) map.center(R.fix); },
   fullscreen: () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); },
   gpx: exportGpx,
