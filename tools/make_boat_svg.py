@@ -118,11 +118,14 @@ m_ctrl = ((m_head[0] + m_clew[0]) / 2 - 1.15 * S, (m_head[1] + m_clew[1]) / 2)
 main = (f'M{f(luff_x)},{f(Y(boom_h) - 3)} L{f(luff_x)},{f(Y(head_h) + 1.5)} L{f(m_head[0])},{f(m_head[1])} '
         f'Q{f(m_ctrl[0])},{f(m_ctrl[1])} {f(m_clew[0])},{f(m_clew[1])} '
         f'Q{f((luff_x + m_clew[0]) / 2)},{f(Y(boom_h) - 9)} {f(luff_x)},{f(Y(boom_h) - 3)} Z')
+# Battens: two full-length at the top, two partial below; roughly parallel to the boom, starting on the leech.
 battens = ''
-for t in (0.1, 0.3, 0.5, 0.7, 0.86):
+for t, full in ((0.2, True), (0.42, True), (0.64, False), (0.85, False)):
     px, py = q(m_head, m_ctrl, m_clew, t)
-    length = (luff_x - px) if t < 0.15 else 1.6 * S
-    battens += f'<line x1="{f(px)}" y1="{f(py)}" x2="{f(px + length)}" y2="{f(py + 1.5)}"/>'
+    x1 = luff_x - 3 if full else px + 1.9 * S
+    y1 = py + (x1 - px) * 0.035
+    battens += (f'<line x1="{f(px + 1)}" y1="{f(py)}" x2="{f(x1)}" y2="{f(y1)}" stroke="#a9bccc" stroke-width="3.4"/>'
+                f'<line x1="{f(px + 1)}" y1="{f(py)}" x2="{f(x1)}" y2="{f(y1)}" stroke="#f7fafc" stroke-width="1.6"/>')
 draft = ''
 for t in (0.28, 0.55, 0.8):
     px, py = q(m_head, m_ctrl, m_clew, t)
@@ -210,7 +213,7 @@ svg = f'''<svg class="boatArt" viewBox="0 0 960 680" preserveAspectRatio="xMidYM
       <path d="{jsheet}" stroke="#9db4c6" stroke-width="0.9" fill="none"/>
       <path d="{main}" fill="url(#mainG)" stroke="#8ea6b9" stroke-width="1"/>
       <g stroke="#b6c5d2" stroke-width="0.9" fill="none" opacity="0.8">{draft}</g>
-      <g stroke="#8aa2b6" stroke-width="1.6" stroke-linecap="round">{battens}</g>
+      <g stroke-linecap="round">{battens}</g>
       <g transform="translate({f(luff_x - 0.75 * S)},{f(Y(head_h - 2.2))}) scale(0.85)"><path d="M0,-13 l4,9 10,1 -7.5,6.5 2.4,10 -8.9,-5.3 -8.9,5.3 2.4,-10 -7.5,-6.5 10,-1 Z" fill="#ffb020"/></g>
       <g font-family="system-ui,Arial" font-weight="800" fill="#0b2a46" text-anchor="end">
         <text x="{f(luff_x - 0.3 * S)}" y="{f(Y(head_h - 4.6))}" font-size="22">RUS</text>
@@ -223,6 +226,8 @@ svg = f'''<svg class="boatArt" viewBox="0 0 960 680" preserveAspectRatio="xMidYM
       <path d="{vang}" stroke="#9db4c6" stroke-width="2"/>
       <path d="{mainsheet}" stroke="#9db4c6" stroke-width="0.9"/>
 
+      <path d="{keel}" fill="#5b7fa3" stroke="#b3cfe9" stroke-width="1"/>
+      <path d="{bulb}" fill="#5b7fa3" stroke="#b3cfe9" stroke-width="1"/>
       <path d="{hull}" fill="url(#topsides)"/>
       <g clip-path="url(#hullClip)">
         <path d="{below}" fill="url(#bottom)"/>
@@ -247,8 +252,6 @@ svg = f'''<svg class="boatArt" viewBox="0 0 960 680" preserveAspectRatio="xMidYM
       <path d="M{P(-0.02, SHEER_BOW - 0.02)} L{P(-0.32, SHEER_BOW - 0.06)} L{P(-0.3, SHEER_BOW - 0.16)} L{P(-0.02, SHEER_BOW - 0.14)} Z" fill="#c3ced7"/>
       <circle cx="{f(X(-0.3))}" cy="{f(Y(SHEER_BOW - 0.11))}" r="2.3" fill="#8e9daa"/>
 
-      <path d="{keel}" fill="#5b7fa3" stroke="#b3cfe9" stroke-width="1"/>
-      <path d="{bulb}" fill="#5b7fa3" stroke="#b3cfe9" stroke-width="1"/>
       <path d="{rudder}" fill="#6f93b8" stroke="#c3dbf0" stroke-width="1"/>
 
       <g stroke="#5fa8d3" stroke-width="0.9" fill="none" marker-start="url(#tk)" marker-end="url(#tk)">

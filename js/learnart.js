@@ -1,10 +1,10 @@
 // Illustrations for the "Учебник" (top views unless noted). Plain SVG strings, no external assets.
 
-import { C, svg, text as t, arrow, wind as kWind, buoy, boatTop, route as path, pill, at } from './learnkit.js?v=8';
+import { C, svg, text as t, arrow, wind as kWind, buoy, boatTop, route as path, pill, at, rnd } from './learnkit.js?v=8';
 
 const { WIND, OK, TXT, MUTED, WARN } = C, A = C.GIVE, B = C.RIGHT;
 const wind = (x = 22, y = 8) => kWind(x + 8, y + 6, 180, 36);
-const boat = (x, y, hdg, color = B, rel = null, sail = true, scale) => boatTop(x, y, hdg, color, rel ?? 0, { noSail: sail === false, scale });
+const boat = (x, y, hdg, color = B, rel = null, sail = true, scale, gennaker) => boatTop(x, y, hdg, color, rel ?? 0, { noSail: sail === false, scale, gennaker });
 const mark = (x, y) => buoy(x, y);
 void TXT;
 
@@ -15,21 +15,21 @@ export const ART = {
     const sail = at(bx, by, h - 72, 78), keel = at(bx, by, h + 90, 66);
     const sum = [bx + (sail[0] - bx) + (keel[0] - bx), by + (sail[1] - by) + (keel[1] - by)];
     const ahead = at(bx, by, h, 70);
-    return svg(360, 280, `${wind(16, 6)}
+    return svg(360, 280, `${wind(22, 6)}
       ${boat(bx, by, h, B, 40)}
       ${arrow(bx, by, sail[0], sail[1], OK, 3)}${pill(sail[0] - 4, sail[1] + 26, 'тяга паруса', OK)}
       ${arrow(bx, by, keel[0], keel[1], A, 3)}${pill(keel[0] + 6, keel[1] - 14, 'упор киля', A)}
       ${path(`M${sail[0]},${sail[1]} L${sum[0]},${sum[1]} L${keel[0]},${keel[1]}`, MUTED, 1.2, '3 4')}
-      ${arrow(bx, by, ahead[0], ahead[1], '#fff', 3.5)}${pill(ahead[0] - 6, ahead[1] - 14, 'итог: ход вперёд', TXT)}`, 'Силы на парусе и киле');
+      ${arrow(bx, by, ahead[0], ahead[1], '#fff', 3.5)}${pill(ahead[0] - 22, ahead[1] - 14, 'итог: ход вперёд', TXT)}`, 'Силы на парусе и киле');
   })(),
 
   // Up and down the course in tacks and gybes.
   zigzag: svg(360, 330, `${wind()}
     <line x1="120" y1="300" x2="240" y2="300" stroke="#ffb020" stroke-width="3"/>${t(250, 304, 'старт / финиш', { fill: '#ffb020' })}
-    ${mark(180, 40)}${t(192, 44, 'наветренный знак')}${mark(165, 268)}${mark(195, 268)}${t(205, 272, 'ворота')}
-    ${path('M175,298 L120,236 L205,154 L150,96 L180,48', B, 2.4, '')}
-    ${path('M188,48 L250,120 L170,190 L225,262 L198,268', A, 2.4, '6 4')}
-    ${boat(147, 267, -42, B, 42, true, 0.68)}${boat(166, 70, 32, B, -32, true, 0.68)}${boat(232, 102, 139, A, -139, true, 0.68)}${boat(208, 236, 143, A, -143, true, 0.68)}
+    ${mark(180, 40)}${t(192, 44, 'наветренный знак')}${mark(165, 268)}${mark(195, 268)}${t(150, 272, 'ворота', { anchor: 'end' })}
+    ${(() => { const w = rnd([150, 96], [180, 40], [250, 120], 'p', 15), g = rnd([186, 236], [195, 268], [236, 228], 's', 14);
+      return path(`M175,298 L120,236 L205,154 L150,96 L${w.a} ${w.arc}`, B, 2.4, '') + path(`M${w.b} L250,120 L170,190 L${g.a} ${g.arc} L236,228`, A, 2.4, '6 4'); })()}
+    ${boat(147, 267, -42, B, 42, true, 0.68)}${boat(166, 74, 28, B, -32, true, 0.68)}${boat(232, 106, 139, A, -139, true, 0.68)}${boat(178, 214, 160, A, -150, true, 0.68)}
     ${t(60, 180, 'вверх: зигзаг', { fill: B, bold: true })}${t(60, 196, 'поворотами', { fill: B })}${t(60, 210, 'оверштаг', { fill: B })}
     ${t(262, 180, 'вниз: тоже', { fill: A, bold: true })}${t(262, 196, 'галсами, через', { fill: A })}${t(262, 210, 'фордевинды', { fill: A })}
     `, 'Лавировка галсами вверх и вниз'),
@@ -82,9 +82,8 @@ export const ART = {
     ${mark(180, 54)}${pill(162, 40, '1 наветренный', TXT, 'end')}
     ${mark(230, 66)}${pill(246, 70, '1A отбойник', TXT, 'start')}
     ${mark(160, 268)}${mark(200, 268)}${pill(214, 290, '4S / 4P ворота', TXT, 'start')}
-    ${path('M180,318 L128,250 L214,170 L150,104 L176,62', B, 2.4, '')}
-    ${path('M184,54 L224,64', MUTED, 1.6, '3 3')}
-    ${path('M232,74 L268,140 L182,206 L198,260', A, 2.4, '7 5')}
+    ${(() => { const w = rnd([150, 104], [180, 54], [230, 66], 'p', 14), o = rnd([180, 54], [230, 66], [268, 140], 'p', 13), g = rnd([182, 206], [200, 268], [240, 236], 's', 14);
+      return path(`M180,318 L128,250 L214,170 L150,104 L${w.a} ${w.arc} L${o.a} ${o.arc}`, B, 2.4, '') + path(`M${o.b} L268,140 L182,206 L${g.a} ${g.arc} L240,236`, A, 2.4, '7 5'); })()}
     ${boat(171, 284, -40, B, 40, true, 0.7)}${boat(182, 132, -40, B, 40, true, 0.7)}${boat(250, 107, 152, A, -152, true, 0.7)}${boat(225, 173, -128, A, 128, true, 0.7)}
     ${pill(8, 206, 'вверх галсами', B, 'start')}${pill(352, 236, 'вниз галсами', A, 'end')}`, 'Наветренно-подветренная дистанция'),
 
@@ -92,7 +91,8 @@ export const ART = {
   triangle: svg(360, 320, `${wind(22, 6)}
     ${mark(190, 50)}${mark(80, 160)}${mark(190, 250)}
     <line x1="140" y1="288" x2="240" y2="288" stroke="#ffb020" stroke-width="3"/>${pill(190, 312, 'старт и финиш', '#ffb020')}
-    ${path('M190,286 L190,60', B, 2.4, '')}${path('M183,56 L88,152', A, 2.4, '7 5')}${path('M88,168 L182,244', A, 2.4, '7 5')}${path('M196,244 L196,60', B, 2.4, '')}
+    ${(() => { const m1 = rnd([190, 286], [190, 50], [80, 160], 'p', 15), m2 = rnd([190, 50], [80, 160], [190, 250], 'p', 15), m3 = rnd([80, 160], [190, 250], [206, 90], 'p', 15);
+      return path(`M190,286 L${m1.a} ${m1.arc}`, B, 2.4, '') + path(`M${m1.b} L${m2.a} ${m2.arc} L${m3.a}`, A, 2.4, '7 5') + path(`M${m3.a} ${m3.arc} L216,96`, B, 2.4, ''); })()}
     ${pill(206, 46, '1', TXT, 'start')}${pill(60, 164, '2', TXT, 'end')}${pill(206, 262, '3', TXT, 'start')}
     ${pill(320, 160, 'вверх', B, 'end')}${pill(96, 96, 'бакштаг', A, 'end')}${pill(112, 232, 'бакштаг', A, 'end')}`, 'Треугольник'),
 
@@ -115,10 +115,23 @@ export const ART = {
 
   // Wide in, tight out.
   rounding: svg(360, 230, `${wind()}${mark(180, 70)}
-    ${path('M90,210 C120,120 140,80 170,64 C190,58 200,70 205,90 C210,130 230,190 250,215', B, 2.6, '')}
-    ${path('M110,210 C150,130 160,90 170,78', WARN, 2, '4 4')}
+    ${path('M80,210 C100,150 130,95 165,62 A18,18 0 0 1 198,72 C204,110 212,170 232,215', B, 2.6, '')}
+    ${path('M110,210 C146,140 156,106 164,90', WARN, 2, '4 4')}
     ${t(60, 140, 'широко зайти', { fill: B, bold: true })}${t(225, 140, 'узко выйти', { fill: B, bold: true })}
     ${t(100, 225, 'плохо: впритык к знаку и выход наружу', { size: 11, fill: WARN })}`, 'Огибание знака'),
+
+  // Gybe under gennaker: the sail goes round the front of the forestay.
+  gennGybe: svg(360, 300, `${wind(22, 6)}
+    ${path('M84,58 L180,170 L84,282', MUTED, 2, '6 5')}
+    ${boat(112, 92, 140, B, -140, true, 1.1, true)}${boat(180, 168, 180, A, 179, true, 1.1, true)}${boat(112, 246, 220, B, 140, true, 1.1, true)}
+    ${pill(150, 120, '1 бакштаг', B, 'start')}${pill(272, 214, '2 корма через ветер', A)}${pill(150, 262, '3 новый галс', B, 'start')}
+    ${pill(252, 40, 'парус уходит вперёд,', TXT)}${pill(252, 64, 'перед штагом', TXT)}`, 'Поворот фордевинд на геннакере'),
+
+  // Tack under jib: three moments.
+  jibTack: svg(360, 260, `${wind(22, 6)}
+    ${path('M110,236 L180,146 L110,56', MUTED, 2, '6 5')}
+    ${boat(132, 208, 40, B, -40)}${boat(180, 140, 0, A, 0, true, 1.2)}${boat(132, 84, -40, B, 40)}
+    ${pill(130, 252, '1 «Поворот!»', B)}${pill(252, 186, '2 нос через ветер:', A)}${pill(252, 210, 'отдать старый шкот', A)}${pill(140, 40, '3 выбрать новый', B)}`, 'Поворот оверштаг на стакселе'),
 
   // Two-turns penalty.
   penalty: svg(360, 240, `${wind(22, 6)}
@@ -133,15 +146,3 @@ export const ART = {
     ${pill(16, 280, '3 сразу разворот, подход против ветра', TXT, 'start')}`, 'Человек за бортом'),
 };
 
-// Knot sketches (rope = thick light stroke with dark edge).
-const rope = (d) => `<path d="${d}" fill="none" stroke="#3b2f1a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#e8d9a8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`;
-export const KNOT_ART = {
-  'Восьмёрка': svg(200, 120, rope('M10,60 L60,60 C95,60 100,20 75,20 C50,20 55,95 90,95 C120,95 120,60 150,60 L190,60')),
-  'Булинь': svg(200, 120, rope('M10,30 L100,30 C120,30 125,50 110,58 C95,66 85,50 98,42 L120,42 C150,42 160,110 110,110 C70,110 60,70 100,60')),
-  'Выбленочный': svg(200, 120, `<rect x="0" y="50" width="200" height="12" rx="6" fill="#9db4c6"/>` + rope('M40,110 L70,40 C75,30 90,30 92,45 L95,75 M95,75 C98,90 115,90 118,75 L122,45 C124,30 140,30 144,40 L170,110')),
-  'Прямой': svg(200, 120, rope('M10,40 L80,40 C110,40 115,80 90,80 C70,80 80,40 110,40 L190,40') + rope('M10,80 L80,80 C110,80 115,40 90,40')),
-  'Шкотовый': svg(200, 120, `${rope('M190,40 L90,40 C50,40 50,90 90,90 L190,90')}${rope('M10,65 L70,65 C110,65 110,30 95,30 C80,30 82,65 120,62')}`),
-  'На утке': svg(200, 120, `<path d="M40,60 L160,60 M70,60 L70,75 M130,60 L130,75" stroke="#9db4c6" stroke-width="10" stroke-linecap="round"/>` + rope('M10,95 L70,70 C110,50 150,50 160,62 C170,75 60,80 50,62 C40,48 150,45 160,60 L190,40')),
-  'Два полуштыка с оборотом': svg(200, 120, `<circle cx="40" cy="60" r="22" fill="none" stroke="#9db4c6" stroke-width="7"/>` + rope('M190,60 L80,60 C40,60 30,40 40,38 C55,36 60,78 45,82 C30,86 40,62 90,62 C110,62 110,80 120,62 C130,44 140,80 150,62')),
-  'Бухта троса': svg(200, 120, [0, 1, 2, 3].map((i) => rope(`M100,${20 + i * 3} C${150 + i * 4},${20 + i * 3} ${150 + i * 4},${100 - i * 3} 100,${100 - i * 3} C${50 - i * 4},${100 - i * 3} ${50 - i * 4},${20 + i * 3} 100,${20 + i * 3}`)).join('')),
-};

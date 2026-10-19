@@ -332,12 +332,15 @@ body { grid-template-columns: minmax(0, 1fr); }
 .lstern { max-width: 560px; }
 
 .lknots { display: grid; gap: 10px; }
-.lknot { display: grid; grid-template-columns: 200px 1fr; gap: 12px; align-items: start; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-.lknot .lsvg { margin: 0; max-width: 200px; }
-@media (max-width: 600px) { .lknot { grid-template-columns: 1fr; } .lknot .lsvg { max-width: 260px; } }
+.lknot { display: grid; grid-template-columns: minmax(0, 520px) 1fr; gap: 14px; align-items: start; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.lknot .lsvg { margin: 0; width: 100%; max-width: 520px; }
+@media (max-width: 900px) { .lknot { grid-template-columns: minmax(0, 1fr); } }
 
 .lsails { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .lsails figure { margin: 0; }
 .lsails figcaption { text-align: center; font-weight: 700; margin-bottom: 4px; }
 .lsails .lsvg { margin: 0; }
 @media (max-width: 700px) { .lsails { grid-template-columns: 1fr; } .lsails .lsvg { max-width: 320px; } }
+
+.lsteps { padding-left: 22px; margin: 6px 0 10px; }
+.lsteps li { margin: 0 0 8px; color: #c9d8e6; line-height: 1.5; }

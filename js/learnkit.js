@@ -24,7 +24,7 @@ export const text = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o
 
 // Label on a dark rounded pill — readable over water, boats and lines.
 export function pill(x, y, s, color = C.TXT, anchor = 'middle', size = 12) {
-  const w = s.length * size * 0.56 + 14, h = size + 9;
+  const w = s.length * size * 0.64 + 16, h = size + 9;
   const x0 = anchor === 'middle' ? x - w / 2 : anchor === 'end' ? x - w : x;
   return `<rect x="${f(x0)}" y="${f(y - h + 5)}" width="${f(w)}" height="${h}" rx="${h / 2}" fill="#071523" fill-opacity="0.82" stroke="${color}" stroke-opacity="0.55"/>`
     + `<text x="${f(x0 + w / 2)}" y="${f(y)}" font-size="${size}" font-weight="700" fill="${color}" text-anchor="middle" font-family="system-ui,Arial,sans-serif">${s}</text>`;
@@ -63,7 +63,10 @@ export function boatTop(x, y, hdg, color = C.RIGHT, rel = 0, opts = {}) {
     return `M${f(p0[0])},${f(p0[1])} Q${f(mx + nx * bulge)},${f(my + ny * bulge)} ${f(p1[0])},${f(p1[1])} Q${f(mx + nx * bulge * 0.35)},${f(my + ny * bulge * 0.35)} ${f(p0[0])},${f(p0[1])} Z`;
   };
   const jibEnd = [side * (3 + 9 * Math.sin(r(Math.min(th, 50)))), -4 + 3 * Math.cos(r(Math.min(th, 50)))];
-  const sails = opts.noSail ? '' :
+  // Gennaker: big light sail ahead, tack on the bowsprit tip, clew far out to leeward.
+  const genn = opts.gennaker ? `<line x1="0" y1="-22" x2="0" y2="-29" stroke="#c3ced7" stroke-width="1.6"/>`
+    + `<path d="${crescent([0, -29], [side * (20 + 6 * Math.sin(r(th))), -2], 13)}" fill="#cfe3f7" stroke="#6f8fae" stroke-width="0.8"/>` : '';
+  const sails = opts.noSail ? '' : genn +
     `<path d="${crescent([0, -21], jibEnd, 7.5)}" fill="#f4f7fa" stroke="#52677a" stroke-width="0.8"/>`
     + `<path d="${crescent(mast, boomEnd, 9.5)}" fill="#f4f7fa" stroke="#52677a" stroke-width="0.8"/>`
     + `<line x1="0" y1="-5" x2="${f(boomEnd[0])}" y2="${f(boomEnd[1])}" stroke="#e3e9ef" stroke-width="1.8" stroke-linecap="round"/>`;
@@ -84,3 +87,16 @@ export const route = (d, c = C.MUTED, w = 2, dash = '6 5') => `<path d="${d}" fi
 
 // Point at distance `len` along compass bearing `brg` (0 = up the page) from (x, y).
 export const at = (x, y, brg, len) => [x + Math.sin(brg * Math.PI / 180) * len, y - Math.cos(brg * Math.PI / 180) * len];
+
+// Rounding a mark: the course passes the mark at radius R instead of running into its centre.
+// side 'p' = mark left to port (boat turns anticlockwise), 's' = to starboard. Returns entry/exit points
+// and the SVG arc command from entry to exit.
+export function rnd(prev, m, next, side = 'p', R = 16) {
+  const nrm = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1; return [dx / L, dy / L]; };
+  const u = nrm(prev, m), v = nrm(m, next), s = side === 'p' ? 1 : -1;
+  const a = [m[0] - u[1] * R * s, m[1] + u[0] * R * s], b = [m[0] - v[1] * R * s, m[1] + v[0] * R * s];
+  const cross = u[0] * v[1] - u[1] * v[0], ang = Math.acos(Math.max(-1, Math.min(1, u[0] * v[0] + u[1] * v[1])));
+  const amount = side === 'p' ? (cross <= 0 ? ang : 2 * Math.PI - ang) : (cross >= 0 ? ang : 2 * Math.PI - ang);
+  const P = (p) => `${f(p[0])},${f(p[1])}`;
+  return { a: P(a), b: P(b), arc: `A${R},${R} 0 ${amount > Math.PI ? 1 : 0} ${side === 'p' ? 0 : 1} ${P(b)}` };
+}
