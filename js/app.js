@@ -1044,7 +1044,18 @@ setInterval(() => {
 
 // Offline: cache the whole app in the browser (needs https or localhost).
 if ('serviceWorker' in navigator && window.isSecureContext) {
-  navigator.serviceWorker.register('sw.js').then(async () => {
+  // A new version took over: reload at once on the home screen, during a race only on request.
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) return;
+    if (!$('home').hidden) { location.reload(); return; }
+    const el = $('offlineState');
+    el.textContent = 'Есть новая версия — нажмите, чтобы обновить';
+    el.style.cursor = 'pointer';
+    el.onclick = () => location.reload();
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(async (reg) => {
+    reg.update().catch(() => {});
     await navigator.serviceWorker.ready;
     const keys = await caches.keys();
     $('offlineState').textContent = keys.some((k) => k.startsWith('nordstar-')) ? 'Офлайн: приложение сохранено в браузере ✓' : 'Офлайн: сохраняется…';

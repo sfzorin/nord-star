@@ -1,6 +1,6 @@
 // Illustrations for the "Учебник" (top views unless noted). Plain SVG strings, no external assets.
 
-import { C, svg, text as t, arrow, wind as kWind, buoy, boatTop, route as path, pill, at, rnd } from './learnkit.js?v=8';
+import { C, svg, text as t, arrow, wind as kWind, buoy, boatTop, route as path, pill, at, rnd, tick } from './learnkit.js?v=8';
 
 const { WIND, OK, TXT, MUTED, WARN } = C, A = C.GIVE, B = C.RIGHT;
 const wind = (x = 22, y = 8) => kWind(x + 8, y + 6, 180, 36);
@@ -24,15 +24,24 @@ export const ART = {
   })(),
 
   // Up and down the course in tacks and gybes.
-  zigzag: svg(360, 330, `${wind()}
-    <line x1="120" y1="300" x2="240" y2="300" stroke="#ffb020" stroke-width="3"/>${t(250, 304, 'старт / финиш', { fill: '#ffb020' })}
-    ${mark(180, 40)}${t(192, 44, 'наветренный знак')}${mark(165, 268)}${mark(195, 268)}${t(150, 272, 'ворота', { anchor: 'end' })}
-    ${(() => { const w = rnd([150, 96], [180, 40], [250, 120], 'p', 15), g = rnd([186, 236], [195, 268], [236, 228], 's', 14);
-      return path(`M175,298 L120,236 L205,154 L150,96 L${w.a} ${w.arc}`, B, 2.4, '') + path(`M${w.b} L250,120 L170,190 L${g.a} ${g.arc} L236,228`, A, 2.4, '6 4'); })()}
-    ${boat(147, 267, -42, B, 42, true, 0.68)}${boat(166, 74, 28, B, -32, true, 0.68)}${boat(232, 106, 139, A, -139, true, 0.68)}${boat(178, 214, 160, A, -150, true, 0.68)}
-    ${t(60, 180, 'вверх: зигзаг', { fill: B, bold: true })}${t(60, 196, 'поворотами', { fill: B })}${t(60, 210, 'оверштаг', { fill: B })}
-    ${t(262, 180, 'вниз: тоже', { fill: A, bold: true })}${t(262, 196, 'галсами, через', { fill: A })}${t(262, 210, 'фордевинды', { fill: A })}
-    `, 'Лавировка галсами вверх и вниз'),
+  zigzag: (() => {
+    const w = rnd([262, 128], [200, 50], [110, 130], 'p', 16), g = rnd([186, 210], [230, 250], [274, 196], 'p', 14);
+    return svg(360, 360, `${wind()}
+    <line x1="110" y1="322" x2="250" y2="322" stroke="#ffb020" stroke-width="2.4" stroke-dasharray="7 5"/>
+    ${buoy(110, 322)}<rect x="241" y="313" width="18" height="18" rx="3" fill="#4fc3f7" stroke="#fff" stroke-width="1.6"/>
+    ${pill(180, 350, 'линия старта', '#ffb020')}
+    <line x1="150" y1="250" x2="230" y2="250" stroke="${TXT}" stroke-width="1.2" stroke-dasharray="3 4" opacity="0.7"/>
+    ${mark(150, 250)}${mark(230, 250)}${pill(180, 286, 'ворота', TXT)}
+    ${mark(200, 50)}${pill(222, 54, 'наветренный знак', TXT, 'start')}
+    ${path(`M180,318 L100,236 L262,128 L${w.a} ${w.arc}`, B, 2.6, '')}
+    ${tick(180, 318, 100, 236, B)}${tick(100, 236, 262, 128, B)}${tick(262, 128, 214, 66, B)}
+    ${path(`M${w.b} L110,130 L186,210 L${g.a} ${g.arc} L274,196`, A, 2.6, '7 5')}
+    ${tick(186, 62, 110, 130, A)}${tick(110, 130, 186, 210, A)}${tick(258, 214, 274, 196, A)}
+    ${boat(200, 169, 56, B, -45, true, 0.7)}${boat(130, 151, 136, A, -136, true, 0.7)}
+    ${pill(8, 300, 'вверх: галсами', B, 'start')}${pill(8, 186, 'вниз: фордевинды', A, 'start')}
+    ${pill(282, 192, '2-й круг', A, 'start', 11)}`, 'Лавировка галсами вверх и вниз');
+  })(),
+
 
   // Heel and the crew on the rail (view from astern).
   heel: svg(360, 260, `${arrow(24, 80, 104, 80)}${pill(64, 66, 'ветер', WIND, 'middle', 11)}
@@ -79,20 +88,22 @@ export const ART = {
     <line x1="112" y1="320" x2="248" y2="320" stroke="#ffb020" stroke-width="3"/>
     ${buoy(112, 320)}<rect x="240" y="311" width="18" height="18" rx="3" fill="#4fc3f7" stroke="#fff" stroke-width="1.6"/>
     ${pill(180, 346, 'старт и финиш', '#ffb020')}
-    ${mark(180, 54)}${pill(162, 40, '1 наветренный', TXT, 'end')}
-    ${mark(230, 66)}${pill(246, 70, '1A отбойник', TXT, 'start')}
+    ${mark(180, 54)}${pill(198, 58, '1 наветренный', TXT, 'start')}
+    ${mark(130, 66)}${pill(130, 30, '1A отбойник', TXT)}
     ${mark(160, 268)}${mark(200, 268)}${pill(214, 290, '4S / 4P ворота', TXT, 'start')}
-    ${(() => { const w = rnd([150, 104], [180, 54], [230, 66], 'p', 14), o = rnd([180, 54], [230, 66], [268, 140], 'p', 13), g = rnd([182, 206], [200, 268], [240, 236], 's', 14);
-      return path(`M180,318 L128,250 L214,170 L150,104 L${w.a} ${w.arc} L${o.a} ${o.arc}`, B, 2.4, '') + path(`M${o.b} L268,140 L182,206 L${g.a} ${g.arc} L240,236`, A, 2.4, '7 5'); })()}
-    ${boat(171, 284, -40, B, 40, true, 0.7)}${boat(182, 132, -40, B, 40, true, 0.7)}${boat(250, 107, 152, A, -152, true, 0.7)}${boat(225, 173, -128, A, 128, true, 0.7)}
-    ${pill(8, 206, 'вверх галсами', B, 'start')}${pill(352, 236, 'вниз галсами', A, 'end')}`, 'Наветренно-подветренная дистанция'),
+    ${(() => { const w = rnd([236, 150], [180, 54], [130, 66], 'p', 14), o = rnd([180, 54], [130, 66], [96, 140], 'p', 13), g = rnd([182, 206], [200, 268], [240, 236], 'p', 14);
+      return path(`M150,318 L100,240 L236,150 L${w.a} ${w.arc} L${o.a} ${o.arc}`, B, 2.4, '') + path(`M${o.b} L96,140 L182,206 L${g.a} ${g.arc} L240,236`, A, 2.4, '7 5')
+        + tick(150, 318, 100, 240, B) + tick(100, 240, 236, 150, B) + tick(236, 150, 194, 76, B) + tick(96, 140, 182, 206, A) + tick(225, 251, 240, 236, A); })()}
+    ${boat(125, 279, -33, B, 40, true, 0.7)}${boat(130, 220, 56, B, -45, true, 0.7)}${boat(214, 112, -30, B, 40, true, 0.7)}${boat(140, 173, 128, A, -128, true, 0.7)}
+    ${pill(8, 290, 'вверх галсами', B, 'start')}${pill(352, 200, 'вниз галсами', A, 'end')}`, 'Наветренно-подветренная дистанция'),
 
   // Triangle course.
   triangle: svg(360, 320, `${wind(22, 6)}
     ${mark(190, 50)}${mark(80, 160)}${mark(190, 250)}
     <line x1="140" y1="288" x2="240" y2="288" stroke="#ffb020" stroke-width="3"/>${pill(190, 312, 'старт и финиш', '#ffb020')}
     ${(() => { const m1 = rnd([190, 286], [190, 50], [80, 160], 'p', 15), m2 = rnd([190, 50], [80, 160], [190, 250], 'p', 15), m3 = rnd([80, 160], [190, 250], [206, 90], 'p', 15);
-      return path(`M190,286 L${m1.a} ${m1.arc}`, B, 2.4, '') + path(`M${m1.b} L${m2.a} ${m2.arc} L${m3.a}`, A, 2.4, '7 5') + path(`M${m3.a} ${m3.arc} L216,96`, B, 2.4, ''); })()}
+      return path(`M190,286 L${m1.a} ${m1.arc}`, B, 2.4, '') + path(`M${m1.b} L${m2.a} ${m2.arc} L${m3.a}`, A, 2.4, '7 5') + path(`M${m3.a} ${m3.arc} L216,96`, B, 2.4, '')
+        + tick(190, 286, 204, 60, B) + tick(180, 66, 90, 150, A) + tick(90, 170, 180, 240, A); })()}
     ${pill(206, 46, '1', TXT, 'start')}${pill(60, 164, '2', TXT, 'end')}${pill(206, 262, '3', TXT, 'start')}
     ${pill(320, 160, 'вверх', B, 'end')}${pill(96, 96, 'бакштаг', A, 'end')}${pill(112, 232, 'бакштаг', A, 'end')}`, 'Треугольник'),
 

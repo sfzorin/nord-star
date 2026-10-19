@@ -100,3 +100,9 @@ export function rnd(prev, m, next, side = 'p', R = 16) {
   const P = (p) => `${f(p[0])},${f(p[1])}`;
   return { a: P(a), b: P(b), arc: `A${R},${R} 0 ${amount > Math.PI ? 1 : 0} ${side === 'p' ? 0 : 1} ${P(b)}` };
 }
+
+// Direction chevron in the middle of a leg.
+export function tick(x1, y1, x2, y2, c, h = 8) {
+  const a = Math.atan2(y2 - y1, x2 - x1), x = (x1 + x2) / 2, y = (y1 + y2) / 2;
+  return `<path d="M${f(x - h * Math.cos(a - 0.5))},${f(y - h * Math.sin(a - 0.5))} L${f(x)},${f(y)} L${f(x - h * Math.cos(a + 0.5))},${f(y - h * Math.sin(a + 0.5))}" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`;
+}
