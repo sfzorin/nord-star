@@ -389,7 +389,7 @@ function render(D) {
   set('clock', clock(D.now));
 
   // gps chip
-  if (R.gpsErr && !fix) set('gpsChip', `GPS: ${R.gpsErr}`, 'bad');
+  if (R.gpsErr && !fix) set('gpsChip', 'GPS ✕', 'bad');
   else if (!fix) set('gpsChip', 'GPS: поиск…', 'warn');
   else set('gpsChip', `GPS ±${Math.round(fix.acc)} м`, fix.acc < 15 ? 'good' : 'warn');
 
@@ -458,7 +458,7 @@ function renderStart(D) {
 
 function startStatus(D) {
   const ln = D.line;
-  if (!R.fix) return [st.pin && st.rc ? 'Нет позиции GPS' : 'Нет GPS и линии', 'info'];
+  if (!R.fix) return [R.gpsErr ? `GPS: ${R.gpsErr}` : 'Ждём позицию GPS…', 'info'];
   if (!ln) return ['Нет линии — пингуйте пин и комитет', 'info'];
   if (!timer.running) return [ln.d > 0 ? 'Вы на стороне дистанции' : 'Таймер не запущен', 'info'];
   if (D.rem > 0) {
@@ -571,7 +571,8 @@ function renderMap(D) {
   map.setLine(st.pin, st.rc, ext);
   map.setMarks(st.marks, nextMarkId(), st.course);
   map.setHazards(st.hazards);
-  map.setBoat(fix, st.set.follow);
+  map.setBoat(fix, false);
+  autoFrame(D);
   if (fix) {
     map.setVector([fix, G.destination(fix, fix.cog, fix.sog * G.KN * 60)]);
     map.setToMark(D.mark ? [fix, D.mark.ll] : null);
@@ -586,6 +587,19 @@ function routePts() {
   const mid = lineMid();
   if (!mid) return [];
   return [mid, ...courseMarks(), mid];
+}
+
+// Follow mode frames what matters: before the start the boat and the line, racing the boat and the next mark.
+let frameT = 0;
+function autoFrame(D) {
+  const fix = R.fix;
+  if (!st.set.follow || !fix || D.now - frameT < 3000) return;
+  frameT = D.now;
+  const pts = [fix];
+  const preStart = timer.running && D.rem > 0;
+  if ((preStart || !R.started) && st.pin && st.rc && D.line && Math.abs(D.line.d) < 3000) pts.push(st.pin, st.rc);
+  else if (D.mark && D.mark.dst < 8 * G.NM) pts.push(D.mark.ll);
+  if (pts.length > 1) map.fit(pts); else map.center(fix);
 }
 
 // ---------------------------------------------------------------- course UI
@@ -612,6 +626,7 @@ function renderCourse() {
   $('courseChips').innerHTML = html;
 
   const mid = lineMid();
+  $('marksCount').textContent = `(${st.marks.filter((m) => !m.via).length})`;
   $('markList').innerHTML = st.marks.filter((m) => !m.via).map((m) => {
     const meta = mid ? `${deg(G.bearing(mid, m))}° ${(G.distance(mid, m) / G.NM).toFixed(2)} nm${m.approx ? ' ≈' : ''}` : '';
     return `<div class="mrow"><input data-name="${m.id}" value="${m.name}"><span class="meta">${meta}</span>
@@ -656,11 +671,10 @@ function addMark(p, approx = false, name) {
 
 function renderBoat() {
   const b = BOAT;
-  $('boatInfo').innerHTML = `<div class="lbl">${b.name} · ${b.sail}</div><div class="kv">
-    <span>Проект</span><span>${b.design}</span><span>Год</span><span>${b.year}</span>
-    <span>Длина / КВЛ</span><span>${b.loa} / ${b.lwl} м</span><span>Ширина / осадка</span><span>${b.beam} / ${b.draft} м</span>
-    <span>Водоизмещение</span><span>${b.displacement} кг</span><span>IRC TCC</span><span>${b.tcc} (без спинакера ${b.tccNonSpin})</span>
-    <span>IRC серт.</span><span>${b.ircCert}</span><span>Экипаж</span><span>${b.crew}</span></div>`;
+  $('boatInfo').innerHTML = `<div class="lbl">${b.name} · ${b.sail} · ${b.design}</div><div class="kv">
+    <span>LOA / LWL</span><span>${b.loa} / ${b.lwl} м</span><span>B / T</span><span>${b.beam} / ${b.draft} м</span>
+    <span>Δ</span><span>${b.displacement} кг</span><span>IRC TCC</span><span>${b.tcc} (без спин. ${b.tccNonSpin})</span>
+    <span>Экипаж</span><span>${b.crew}</span><span>IRC</span><span>№ ${b.ircCert}</span></div>`;
   $('polarSrc').textContent = P.SOURCE;
   $('polarTable').innerHTML = '<tr><th>TWS</th><th>Бейд. угол</th><th>скор.</th><th>VMG</th><th>Форд. угол</th><th>скор.</th><th>VMG</th></tr>' +
     P.table().map((r) => `<tr><td>${r.tws}</td><td>${r.beatAngle.toFixed(1)}°</td><td>${r.beatSpeed.toFixed(2)}</td><td>${r.beatVmg.toFixed(2)}</td><td>${r.gybeAngle.toFixed(1)}°</td><td>${r.runSpeed.toFixed(2)}</td><td>${r.runVmg.toFixed(2)}</td></tr>`).join('');
@@ -744,6 +758,11 @@ function resetRace() {
 const actions = {
   startSync: () => {
     const counting = timer.running && timer.remaining() > 0;
+    // Sync is pressed on a committee signal: a tap far from a whole minute is a slip of the hand.
+    if (counting) {
+      const r = timer.remaining(), off = Math.abs(r - Math.round(r / 60) * 60);
+      if (off > 10) { toast('Синхр. — только в момент сигнала (±10 с от минуты)'); return; }
+    }
     // After the gun a stray tap must not wipe the race: a new sequence needs confirmation (general recall).
     if (timer.running && !counting && !confirm('Гонка идёт. Начать новую процедуру старта (общий отзыв)?')) return;
     timer.startOrSync();
@@ -848,9 +867,24 @@ const actions = {
   resetAll: () => { if (confirm('Сбросить линию, знаки и настройки?')) { localStorage.removeItem(KEY); location.reload(); } },
 };
 
+// Hold-to-confirm buttons (pinging the line ends): a plain tap does nothing.
+let holdT = null, holdDone = false;
+document.addEventListener('pointerdown', (ev) => {
+  const b = ev.target.closest('[data-hold]');
+  if (!b) return;
+  holdDone = false;
+  b.classList.add('holding');
+  holdT = setTimeout(() => { holdDone = true; b.classList.remove('holding'); actions[b.dataset.hold](b); }, 700);
+});
+for (const t of ['pointerup', 'pointercancel']) {
+  document.addEventListener(t, () => { clearTimeout(holdT); document.querySelectorAll('.holding').forEach((x) => x.classList.remove('holding')); }, true);
+}
+
 document.addEventListener('click', (ev) => {
   const tab = ev.target.closest('[data-tab]');
   if (tab) { switchTab(tab.dataset.tab); return; }
+  const hb = ev.target.closest('[data-hold]');
+  if (hb) { if (!holdDone) toast('Удерживайте кнопку, чтобы записать'); holdDone = false; return; }
   const b = ev.target.closest('[data-act]');
   if (b && actions[b.dataset.act]) actions[b.dataset.act](b, ev);
 });
@@ -928,7 +962,7 @@ $('venue').addEventListener('change', () => {
   const v = VENUES[st.venue];
   map.center(v.center, v.zoom);
 });
-const libInfo = () => { const c = COURSES.find((x) => x.id === $('libCourse').value); $('libInfo').textContent = c ? `Источник: ${c.src}${c.kind === 'wl' ? ' · введите азимут ниже, дистанцию можно не вводить' : ` · старт: ${STARTS[c.start]?.name || ''} (примерно)`}` : ''; };
+const libInfo = () => { const c = COURSES.find((x) => x.id === $('libCourse').value); $('libInfo').textContent = c ? `${c.src}${c.kind === 'wl' ? ' · нужен азимут ниже' : ` · старт ≈ ${(STARTS[c.start]?.name || '').split(' (')[0]}`}` : ''; };
 $('libCourse').addEventListener('change', libInfo);
 libInfo();
 renderBoat();

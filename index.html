@@ -114,8 +114,8 @@
       </g>
     </svg>
         <div class="regattas">
-      <button class="regatta" data-act="pickVenue" data-venue="gocek"><b>Регаты Гёчека</b><span>Göcek Race Week, Kış Trofesi, Кубок Ататюрка · залив Фетхие</span></button>
-      <button class="regatta" data-act="pickVenue" data-venue="marmaris"><b>Marmaris Race Week</b><span>осенняя неделя · бухта и залив Мармарис</span></button>
+      <button class="regatta" data-act="pickVenue" data-venue="gocek"><b>Göcek Autumn Race Week &amp; Atatürk Cup</b><span>Göcek Yacht Club · залив Фетхие · дистанции GYC 2021–2026</span></button>
+      <button class="regatta" data-act="pickVenue" data-venue="marmaris"><b>Marmaris International Race Week</b><span>Marmaris International Yacht Club (MIYC) · бухта и залив Мармарис</span></button>
     </div>
     <p id="offlineState" class="homeSub">Офлайн: проверка…</p>
   </div>
@@ -172,8 +172,8 @@
       </div>
       <div class="btnrow">
         <button data-act="startSync" class="primary big2">Старт / синхр.</button>
-        <button data-act="pingPin" class="pin">Пинг пин</button>
-        <button data-act="pingRc" class="rc">Пинг комитет</button>
+        <button data-act="pingPin" class="pin hold" data-hold="pingPin">Пинг пин<i></i></button>
+        <button data-act="pingRc" class="rc hold" data-hold="pingRc">Пинг комитет<i></i></button>
       </div>
       <div id="startFoot" class="foot"></div>
     </section>
@@ -233,39 +233,35 @@
     <!-- МАРШРУТ -->
     <section class="pane" data-pane="course">
       <div class="card">
-        <div class="lbl">Акватория</div>
-        <select id="venue" class="libsel"></select>
-        <div class="lbl">Дистанция из гоночных инструкций</div>
-        <select id="libCourse" class="libsel"></select>
-        <div id="libInfo" class="foot"></div>
-        <div class="btnrow"><button data-act="loadLib" class="primary">Загрузить дистанцию</button></div>
+        <div class="row2"><select id="venue" class="libsel"></select><select id="libCourse" class="libsel grow"></select></div>
+        <div class="row2"><div id="libInfo" class="foot grow"></div><button data-act="loadLib" class="primary">Загрузить</button></div>
       </div>
       <div class="card">
-        <div class="lbl">Объявленный азимут на знак (от середины линии)</div>
+        <div class="lbl">Азимут на знак от середины линии (объявляет комитет)</div>
         <div class="entry">
-          <input id="inBrg" type="number" inputmode="numeric" min="0" max="359" placeholder="290">°<select id="inBrgRef"><option value="M" selected>магн.</option><option value="T">ист.</option></select>
-          <input id="inDist" type="number" inputmode="decimal" step="0.1" min="0.1" placeholder="1.0"> nm
+          <input id="inBrg" type="number" inputmode="numeric" min="0" max="359" placeholder="290">°
+          <select id="inBrgRef"><option value="M" selected>магн.</option><option value="T">ист.</option></select>
+          <input id="inDist" type="number" inputmode="decimal" step="0.1" min="0.1" placeholder="1.0">nm
           <select id="inLaps"><option value="1">1 круг</option><option value="2" selected>2 круга</option><option value="3">3 круга</option></select>
         </div>
         <div class="btnrow">
           <button data-act="buildWL" class="primary">Наветр.-подветр.</button>
-          <button data-act="addByBrg">Добавить знак</button>
+          <button data-act="addByBrg">+ знак по азимуту</button>
         </div>
-        <div class="foot">Без дистанции знак ставится на 1 nm и помечается «примерно». На огибании его точка уточняется сама.</div>
       </div>
-      <div class="lbl">Маршрут</div>
+      <div class="lbl">Маршрут (тап — сделать текущим)</div>
       <div id="courseChips" class="chips"></div>
-      <div class="lbl">Знаки</div>
-      <div id="markList"></div>
-      <div class="btnrow">
-        <button data-act="addMarkTap">+ знак тапом</button>
-        <button data-act="addMarkGps">+ знак по GPS</button>
-        <button data-act="clearCourse" class="dim">Очистить маршрут</button>
-      </div>
-      <div class="btnrow">
-        <button data-act="placePin" class="dim">Пин тапом</button>
-        <button data-act="placeRc" class="dim">Комитет тапом</button>
-      </div>
+      <details id="marksBox" class="card">
+        <summary>Знаки и линия: правка <span id="marksCount" class="foot"></span></summary>
+        <div id="markList"></div>
+        <div class="btnrow">
+          <button data-act="addMarkTap" class="mini">+ знак тапом</button>
+          <button data-act="addMarkGps" class="mini">+ знак по GPS</button>
+          <button data-act="placePin" class="mini">пин тапом</button>
+          <button data-act="placeRc" class="mini">комитет тапом</button>
+          <button data-act="clearCourse" class="mini dim">очистить</button>
+        </div>
+      </details>
     </section>
 
     <!-- ЯХТА -->
@@ -273,19 +269,21 @@
       <div id="boatInfo" class="card"></div>
       <div class="card">
         <div class="lbl">Настройки</div>
-        <div class="set"><span>Процедура старта</span><select id="setPreset"><option value="300">5 минут</option><option value="180">3 минуты</option><option value="360">6 минут</option><option value="600">10 минут</option></select></div>
-        <div class="set"><span>Звук</span><input type="checkbox" id="setSound"></div>
-        <div class="set"><span>Голос</span><input type="checkbox" id="setVoice"></div>
-        <div class="set"><span>GPS → нос, м</span><input type="number" id="setBow" min="0" max="12" step="0.5"></div>
-        <div class="set"><span>Разгон до полной, с</span><input type="number" id="setAccel" min="0" max="30"></div>
-        <div class="set"><span>Радиус огибания, м</span><input type="number" id="setRound" min="10" max="150"></div>
+        <div class="setgrid">
+          <div class="set"><span>Процедура</span><select id="setPreset"><option value="300">5 мин</option><option value="180">3 мин</option><option value="360">6 мин</option><option value="600">10 мин</option></select></div>
+          <div class="set"><span>GPS → нос, м</span><input type="number" id="setBow" min="0" max="12" step="0.5"></div>
+          <div class="set"><span>Звук</span><input type="checkbox" id="setSound"></div>
+          <div class="set"><span>Разгон, с</span><input type="number" id="setAccel" min="0" max="30"></div>
+          <div class="set"><span>Голос</span><input type="checkbox" id="setVoice"></div>
+          <div class="set"><span>Огибание, м</span><input type="number" id="setRound" min="10" max="150"></div>
+        </div>
       </div>
-      <div class="card foot">Данные: карта © OpenStreetMap; морские знаки © OpenSeaMap; глубины EMODnet Bathymetry (GEBCO 2024); спутник и морская подложка Esri; прогноз Open-Meteo; дистанции — гоночные инструкции Göcek Yacht Club 2021–2026.</div>
-      <div class="card"><div class="lbl">Поляра: <span id="polarSrc"></span></div><table id="polarTable" class="polar"></table></div>
+      <details class="card"><summary>Поляра: <span id="polarSrc"></span></summary><table id="polarTable" class="polar"></table></details>
       <div class="btnrow">
         <button data-act="gpx">Трек GPX</button>
         <button data-act="resetAll" class="danger">Сбросить всё</button>
       </div>
+      <div class="foot">Данные: карта © OpenStreetMap; глубины EMODnet / GEBCO 2024 (модель, не для навигации); прогноз Open-Meteo; дистанции — гоночные инструкции Göcek Yacht Club и MIYC.</div>
     </section>
   </aside>
 </main>

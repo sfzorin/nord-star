@@ -205,6 +205,7 @@ export class RaceMap {
 
   addTrack(p) { this.track.addLatLng(toLL(p)); }
   clearTrack() { this.track.setLatLngs([]); }
+  fit(pts) { this.map.fitBounds(L.latLngBounds(pts.map(toLL)), { padding: [50, 50], maxZoom: 16, animate: false }); }
   center(p, zoom) { this.map.setView(toLL(p), zoom ?? this.map.getZoom()); }
   invalidate() { this.map.invalidateSize(); }
 }
