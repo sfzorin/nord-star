@@ -15,9 +15,9 @@ function seg(P, i) {
 }
 
 const palOf = (pal, hot) => (hot ? (pal === BLUE ? BLUE : NEW) : pal);
-const ropeStyle = (d, col, outline = true, off = 0) => (outline ? `<path d="${d}" fill="none" stroke="${col[0]}" stroke-width="9.5"/>` : '')
-  + `<path d="${d}" fill="none" stroke="${col[1]}" stroke-width="6.5"/>`
-  + `<path d="${d}" fill="none" stroke="${col[2]}" stroke-width="5" stroke-dasharray="0.5 3.6" stroke-dashoffset="${f(off)}" stroke-linecap="round" opacity="0.5"/>`
+const ropeStyle = (d, col, outline = true, off = 0) => (outline ? `<path d="${d}" fill="none" stroke="${col[0]}" stroke-width="8"/>` : '')
+  + `<path d="${d}" fill="none" stroke="${col[1]}" stroke-width="5.4"/>`
+  + `<path d="${d}" fill="none" stroke="${col[2]}" stroke-width="4.2" stroke-dasharray="0.5 3.6" stroke-dashoffset="${f(off)}" stroke-linecap="round" opacity="0.5"/>`
   + `<path d="${d}" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.35" transform="translate(-0.8,-0.8)"/>`;
 
 // Sample a rope into a fine polyline: [{x, y, i (segment), s (arc length)}].
@@ -63,7 +63,9 @@ function crossings(ropes, mode = 'alt', flip = []) {
   X.forEach((c, k) => { visits.push({ k, r: c.ra, s: c.sa, side: 'a' }, { k, r: c.rb, s: c.sb, side: 'b' }); });
   visits.sort((p, q) => p.r - q.r || p.s - q.s);
   X.forEach((c, k) => { c.order = visits.findIndex((v) => v.k === k); });
-  if (mode === 'later') X.forEach((c) => { if (!c.top) c.top = (c.rb > c.ra || (c.rb === c.ra && c.sb > c.sa)) ? 'b' : 'a'; });
+  const laterIsB = (c) => c.rb > c.ra || (c.rb === c.ra && c.sb > c.sa);
+  if (mode === 'later') X.forEach((c) => { if (!c.top) c.top = laterIsB(c) ? 'b' : 'a'; });
+  else if (mode === 'first') X.forEach((c) => { if (!c.top) c.top = laterIsB(c) ? 'a' : 'b'; });
   else {
     const prev = {};
     for (const v of visits) {
@@ -89,7 +91,7 @@ function ropeRuns(P, z, n, hiFrom, pal, Sr) {
     if (last && last.back === back && last.col === col && last.end === i) { last.end = i + 1; last.d += seg(P, i); } else runs.push({ back, col, end: i + 1, s0: (Sr.find((p) => p.i === i) || { s: 0 }).s, d: `M${f(P[i][0])},${f(P[i][1])}` + seg(P, i) });
   }
   const out = runs.map((r) => ({ back: r.back, svg: `<g stroke-linecap="butt">${ropeStyle(r.d, r.col, true, r.s0)}</g>` }));
-  const end = (p, col, back) => ({ back, svg: `<circle cx="${f(p[0])}" cy="${f(p[1])}" r="4.6" fill="${col[0]}"/><circle cx="${f(p[0])}" cy="${f(p[1])}" r="3.1" fill="${col[1]}"/>` });
+  const end = (p, col, back) => ({ back, svg: `<circle cx="${f(p[0])}" cy="${f(p[1])}" r="4" fill="${col[0]}"/><circle cx="${f(p[0])}" cy="${f(p[1])}" r="2.7" fill="${col[1]}"/>` });
   out.push(end(P[0], palOf(pal, hiFrom <= 0), (z[0] ?? 1) < 1), end(P[n - 1], palOf(pal, n - 2 >= hiFrom), (z[n - 2] ?? 1) < 1));
   return out;
 }
@@ -100,7 +102,7 @@ function patch(Sr, s0, col) {
   const core = Sr.filter((p) => Math.abs(p.s - s0) <= 6.5);
   if (pts.length < 2) return '';
   const d = (q) => 'M' + q.map((p) => `${f(p.x)},${f(p.y)}`).join(' L');
-  return `<g stroke-linecap="butt" stroke-linejoin="round"><path d="${d(core)}" fill="none" stroke="${col[0]}" stroke-width="9.5"/>${ropeStyle(d(pts), col, false, pts[0].s)}</g>`;
+  return `<g stroke-linecap="butt" stroke-linejoin="round"><path d="${d(core)}" fill="none" stroke="${col[0]}" stroke-width="8"/>${ropeStyle(d(pts), col, false, pts[0].s)}</g>`;
 }
 
 // Dashed arrow along points: the next move.
@@ -149,23 +151,24 @@ const zs = (n, over = {}, base = 1) => Array.from({ length: n }, (_, i) => over[
 
 // Props.
 const rail = `<rect x="0" y="62" width="140" height="14" rx="7" fill="#8fa5b8" stroke="#33495c"/><rect x="0" y="64.5" width="140" height="3" fill="#fff" opacity="0.35"/>`;
-const ring = `<circle cx="30" cy="72" r="17" fill="none" stroke="#33495c" stroke-width="8"/><circle cx="30" cy="72" r="17" fill="none" stroke="#b9c7d3" stroke-width="5"/>`;
-const cleat = `<rect x="56" y="56" width="28" height="30" rx="5" fill="#5d7387" stroke="#22374a"/>`
-  + `<path d="M22,71 C22,64 40,62 70,62 C100,62 118,64 118,71 C118,78 100,80 70,80 C40,80 22,78 22,71 Z" fill="#a7b8c7" stroke="#22374a"/>`
-  + `<path d="M30,67 C50,65 90,65 110,67" stroke="#fff" opacity="0.45" fill="none"/>`;
+const post = `<rect x="20" y="14" width="16" height="116" rx="4" fill="#8fa5b8" stroke="#33495c"/><rect x="23" y="16" width="3.5" height="112" fill="#fff" opacity="0.35"/>`;
+const cleat = `<rect x="54" y="58" width="32" height="28" rx="6" fill="#4d6276" stroke="#22374a"/>`
+  + `<path d="M16,72 C16,66 28,64 48,65 L92,65 C112,64 124,66 124,72 C124,78 112,80 92,79 L48,79 C28,80 16,78 16,72 Z" fill="#a7b8c7" stroke="#22374a"/>`
+  + `<path d="M24,69 C40,67 100,67 116,69" stroke="#fff" opacity="0.45" fill="none"/>`;
 
 const FIG8 = [[40, 22], [56, 48], [72, 74], [84, 100], [70, 118], [48, 112], [44, 92], [58, 76], [78, 56], [92, 40], [84, 24], [66, 26], [40, 44], [34, 62], [46, 80], [62, 92], [80, 112], [100, 124]];
 const BOWL = [[70.0,  12],  [70.0,  23.5],  [70.0,  42.4],  [83.5,  55.9],  [86.2,  74.8],  [72.7,  88.3],  [56.5,  80.2],  [51.1,  61.3],  [59.2,  47.8],  [67.3,  43.1],  [78.1,  37.0],  [100,  50],  [114,  82],  [102,  114],  [76,  126],  [48,  122],  [32,  108],  [45.7,  99.1],  [61.9,  93.7],  [63.2,  74.8],  [61.9,  50.5],  [60.5,  28.9],  [67.3,  12.7],  [80.8,  10.0],  [88.9,  23.5],  [80.8,  42.4],  [78.1,  61.3],  [76.8,  82.9],  [75.4,  104.5]];
-const CLOVE = [[40, 14], [44, 40], [48, 66], [52, 86], [62, 94], [68, 80], [66, 58], [74, 48], [84, 58], [90, 74], [94, 88], [104, 92], [108, 78], [104, 58], [94, 48], [80, 62], [74, 84], [72, 112]];
-const REEF_A1 = [[6, 108], [40, 108], [62, 100], [74, 86], [76, 70], [66, 58], [52, 50], [42, 34]];
-const REEF_B1 = [[134, 108], [100, 108], [78, 100], [66, 86], [64, 70], [74, 58], [88, 50], [98, 34]];
-const REEF_A = [[6, 54], [40, 54], [76, 56], [96, 64], [102, 77], [96, 90], [76, 98], [40, 100], [6, 100]];
-const REEF_B = [[134, 66], [100, 68], [72, 64], [52, 54], [36, 44], [22, 58], [20, 78], [24, 98], [38, 110], [54, 100], [72, 88], [100, 86], [134, 88]];
-const squeeze = (P) => P.map(([x, y]) => [70 + (x - 70) * 0.8, 77 + (y - 77) * 0.66]);
-const SHEET_B = [[134, 50], [86, 50], [56, 54], [44, 72], [56, 90], [86, 94], [134, 94]];
-const SHEET_A = [[8, 128], [44, 116], [64, 100], [66, 78], [68, 54], [76, 38], [96, 34], [106, 60], [106, 84], [104, 102], [96, 112], [84, 110], [78, 88], [72, 78], [60, 74], [50, 72]];
-const CLEAT = [[6, 128], [40, 110], [80, 92], [112, 84], [126, 72], [118, 58], [100, 56], [70, 70], [40, 84], [20, 80], [14, 66], [26, 56], [44, 58], [72, 72], [100, 86], [120, 82], [124, 68], [110, 54], [84, 52], [58, 62], [34, 70], [20, 62], [26, 50], [50, 54], [76, 60], [100, 66]];
-const RTURN = [[136, 64], [100, 64], [70, 62], [52, 56], [40, 62], [36, 76], [42, 90], [54, 92], [60, 80], [54, 64], [42, 68], [38, 80], [46, 94], [60, 96], [76, 93], [86, 90], [90, 76], [90, 52], [82, 46], [76, 56], [76, 72], [80, 86], [94, 98], [106, 96], [114, 90], [118, 76], [118, 52], [110, 46], [104, 56], [104, 72], [108, 86], [122, 98], [134, 100]];
+const CLOVE = [[62, 6], [62, 36], [63, 66], [64, 84], [70, 93], [76, 86], [76, 66], [77, 54], [80, 48], [85, 54], [62, 71], [40, 88], [33, 94], [27, 86], [27, 64], [29, 52], [34, 47], [41, 53], [47, 70], [51, 90], [53, 116]];
+// Reef knot as in the reference drawing: each rope's two parts lie over (or under) the other bight; the
+// diagonals cross the other way. Coordinates in a 650×350 frame, mapped into the panel.
+const RM = (P) => P.map(([x, y]) => [4 + x * 0.203, 30 + y * 0.215]);
+const REEF_R = RM([[0, 245], [150, 245], [250, 245], [290, 270], [330, 320], [385, 340], [440, 320], [455, 260], [455, 180], [455, 100], [440, 40], [385, 22], [330, 45], [290, 95], [250, 122], [200, 122], [105, 122]]);
+const REEF_B = RM([[650, 245], [500, 245], [400, 245], [360, 270], [320, 320], [265, 340], [210, 320], [195, 260], [195, 180], [195, 100], [210, 40], [265, 22], [320, 55], [360, 100], [400, 122], [440, 122], [545, 122]]);
+const squeeze = (P) => P.map(([x, y], i) => [i === 0 || i === P.length - 1 ? x : 70 + (x - 70) * 0.78, 66 + (y - 66) * 0.86]);
+const SHEET_K = [[4, 50], [40, 50], [56, 46], [70, 28], [96, 22], [120, 32], [131, 56], [123, 78], [100, 88], [70, 88], [40, 88], [4, 88]];
+const SHEET_T = [[138, 36], [126, 42], [110, 58], [94, 76], [88, 90], [80, 102], [60, 106], [36, 104], [24, 92], [20, 70], [22, 48], [30, 36], [42, 34], [52, 52], [62, 74], [70, 92], [76, 106], [86, 118], [100, 124]];
+const CLEAT = [[6, 128], [40, 112], [80, 96], [106, 88], [114, 82], [117, 74], [114, 66], [108, 63], [94, 63], [70, 72], [44, 84], [30, 84], [24, 78], [23, 70], [30, 61], [46, 59], [70, 72], [96, 85], [110, 86], [116, 78], [115, 68], [106, 56], [84, 56], [58, 66], [34, 74], [18, 78], [8, 70], [12, 60], [26, 56], [44, 70], [56, 82]];
+const RTURN = [[136, 58], [100, 58], [66, 58], [46, 56], [30, 59], [16, 63], [11, 68], [18, 71], [32, 73], [42, 76], [46, 80], [38, 82], [24, 85], [14, 88], [11, 93], [18, 96], [32, 98], [44, 101], [58, 100], [72, 98], [82, 90], [85, 72], [86, 52], [80, 44], [72, 48], [70, 60], [72, 74], [82, 80], [94, 80], [104, 82], [111, 70], [112, 52], [106, 44], [99, 48], [97, 60], [99, 74], [110, 80], [122, 84], [132, 96]];
 const COIL = (() => {
   const P = [[34, 122]];
   for (let k = 0; k < 4; k++) {
@@ -176,9 +179,8 @@ const COIL = (() => {
 })();
 const WRAP = [[96, 36], [100, 46], [70, 50], [40, 46], [44, 38], [70, 42], [98, 40], [100, 52], [70, 56], [40, 52], [44, 44], [70, 34], [74, 18], [68, 12], [62, 20], [66, 38]];
 
-// Sheet bend = a bowline with its loop cut: thin rope collars the thick bight. Turned so the bight points right.
-const rot = (P) => P.map(([x, y]) => [140 - y, x + 4]);
-const SHEET_T = rot([[70, 2], ...BOWL.slice(0, 12)]), SHEET_K = [[4, 66], [26, 66], ...rot(BOWL.slice(18)), [4, 80]];
+
+const REEF_FLIP = [1, 4, 7, 10], SHEET_FLIP = [1, 3, 4], CLEAT_FLIP = [8], RTURN_FLIP = [1, 3];
 
 export const KNOT_ART = {
   'Восьмёрка': knot('Восьмёрка', {
@@ -198,46 +200,48 @@ export const KNOT_ART = {
     ],
   }),
   'Выбленочный': knot('Выбленочный', {
-    props: [rail],
-    ropes: [{ P: CLOVE, z: zs(17, { 4: 0, 5: 0, 11: 0, 12: 0 }) }],
+    props: [rail], flip: [0],  // both the standing part and the end pass under the diagonal
+    ropes: [{ P: CLOVE, z: zs(20, { 5: 0, 6: 0, 13: 0, 14: 0 }) }],
     steps: [
-      { n: [8], hi: [0], next: [[74, 48], [84, 58], [90, 74]], cap: 'оборот' },
-      { n: [14], hi: [7], next: [[104, 58], [94, 48], [80, 62]], cap: 'второй крест-накрест' },
-      { n: [18], hi: [13], cap: 'конец под диагональ' },
+      { n: [10], hi: [0], next: [[85, 54], [62, 71], [40, 88]], cap: 'оборот' },
+      { n: [18], hi: [9], next: [[41, 53], [47, 70], [51, 90]], cap: 'второй — поверх коренного' },
+      { n: [21], hi: [17], cap: 'конец под диагональ' },
     ],
   }),
   'Прямой': knot('Прямой', {
-    ropes: [{ P: REEF_A1 }, { P: REEF_B1, pal: BLUE }, { P: REEF_A, g: 1 }, { P: REEF_B, pal: BLUE, g: 1 }, { P: squeeze(REEF_A), g: 2 }, { P: squeeze(REEF_B), pal: BLUE, g: 2 }],
+    mode: 'first', flip: REEF_FLIP,
+    ropes: [{ P: REEF_R }, { P: REEF_B, pal: BLUE }, { P: squeeze(REEF_R), g: 1 }, { P: squeeze(REEF_B), pal: BLUE, g: 1 }],
     steps: [
-      { n: [8, 8, 0, 0, 0, 0], hi: [2, 2, 0, 0, 0, 0], cap: 'левый над правым' },
-      { n: [0, 0, 9, 13, 0, 0], hi: [0, 0, 1, 1, 0, 0], cap: 'правый над левым' },
-      { n: [0, 0, 0, 0, 9, 13], hi: [99, 99, 99, 99, 99, 99], cap: 'затянуть' },
+      { n: [9, 9, 0, 0], hi: [2, 2, 99, 99], next: [REEF_R[8], REEF_R[10], REEF_R[12]], cap: 'левый над правым' },
+      { n: [17, 17, 0, 0], hi: [8, 8, 99, 99], cap: 'правый над левым' },
+      { n: [0, 0, 17, 17], hi: [99, 99, 99, 99], cap: 'затянуть' },
     ],
   }),
   'Шкотовый': knot('Шкотовый', {
+    mode: 'first', flip: SHEET_FLIP,
     ropes: [{ P: SHEET_K, pal: BLUE }, { P: SHEET_T }],
     steps: [
-      { n: [SHEET_K.length, 0], hi: [0, 0], next: rot([[70, 4], [70, 24], [84, 52]]), cap: 'петля из толстого' },
-      { n: [SHEET_K.length, 9], hi: [99, 0], next: rot([[59.2, 47.8], [67.3, 43.1], [78.1, 37]]), cap: 'тонкий вокруг петли' },
-      { n: [SHEET_K.length, 13], hi: [99, 8], cap: 'и под себя' },
+      { n: [12, 0], hi: [0, 0], next: [[138, 36], [126, 42], [110, 58], [94, 76]], cap: 'петля из толстого' },
+      { n: [12, 13], hi: [99, 0], next: [[42, 34], [52, 52], [62, 74], [70, 92]], cap: 'через петлю и вокруг' },
+      { n: [12, 19], hi: [99, 12], cap: 'и под себя' },
     ],
   }),
   'На утке': knot('На утке', {
-    props: [cleat], mode: 'later', flip: [7],  // the tail is locked under the last turn
-    ropes: [{ P: CLEAT, z: zs(25, { 3: 0, 4: 0, 5: 0, 9: 0, 10: 0, 14: 0, 15: 0, 16: 0, 20: 0, 21: 0 }) }],
+    props: [cleat], mode: 'later', flip: CLEAT_FLIP,
+    ropes: [{ P: CLEAT, z: zs(30, { 4: 0, 5: 0, 12: 0, 13: 0, 19: 0, 20: 0 }) }],
     steps: [
-      { n: [7], hi: [2], next: [[100, 56], [70, 70], [40, 84]], cap: 'оборот у основания' },
-      { n: [19], hi: [6], next: [[84, 52], [58, 62], [34, 70]], cap: 'восьмёрка' },
-      { n: [26], hi: [18], cap: 'петля-стопор' },
+      { n: [9], hi: [2], next: [[94, 63], [70, 72], [44, 84]], cap: 'под дальний рог' },
+      { n: [23], hi: [8], next: [[84, 56], [58, 66], [34, 74]], cap: 'восьмёрка' },
+      { n: [31], hi: [22], cap: 'шлаг-стопор' },
     ],
   }),
   'Два полуштыка с оборотом': knot('Два полуштыка с оборотом', {
-    props: [ring],
-    ropes: [{ P: RTURN, z: zs(32, { 5: 0, 11: 0 }) }],
+    props: [post], mode: 'later', flip: RTURN_FLIP,
+    ropes: [{ P: RTURN, z: zs(38, { 7: 0, 8: 0, 15: 0, 16: 0 }) }],
     steps: [
-      { n: [14], hi: [2], next: [[60, 96], [76, 93], [86, 90], [90, 70]], cap: 'полный оборот' },
-      { n: [24], hi: [13], next: [[106, 96], [114, 90], [118, 70]], cap: 'первый полуштык' },
-      { n: [33], hi: [23], cap: 'второй полуштык' },
+      { n: [18], hi: [3], next: [[44, 101], [58, 100], [76, 96], [84, 76]], cap: 'полный оборот' },
+      { n: [29], hi: [17], next: [[94, 80], [104, 82], [111, 66]], cap: 'первый полуштык' },
+      { n: [39], hi: [28], cap: 'второй полуштык' },
     ],
   }),
   'Бухта троса': knot('Бухта троса', {
