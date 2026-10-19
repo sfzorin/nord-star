@@ -335,3 +335,9 @@ body { grid-template-columns: minmax(0, 1fr); }
 .lknot { display: grid; grid-template-columns: 200px 1fr; gap: 12px; align-items: start; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
 .lknot .lsvg { margin: 0; max-width: 200px; }
 @media (max-width: 600px) { .lknot { grid-template-columns: 1fr; } .lknot .lsvg { max-width: 260px; } }
+
+.lsails { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.lsails figure { margin: 0; }
+.lsails figcaption { text-align: center; font-weight: 700; margin-bottom: 4px; }
+.lsails .lsvg { margin: 0; }
+@media (max-width: 700px) { .lsails { grid-template-columns: 1fr; } .lsails .lsvg { max-width: 320px; } }

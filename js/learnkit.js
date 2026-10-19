@@ -41,7 +41,7 @@ export function wind(x = 30, y = 10, dir = 180, len = 40) {
   const a = (dir - 90) * Math.PI / 180, nx = -Math.sin(a), ny = Math.cos(a);
   const ux = Math.cos(a), uy = Math.sin(a);
   const one = (o, l) => arrow(f(x + nx * o), f(y + ny * o), f(x + nx * o + ux * l), f(y + ny * o + uy * l), C.WIND, 2.4);
-  return `<g opacity="0.95">${one(-11, len * 0.75)}${one(0, len)}${one(11, len * 0.75)}</g>${pill(x + 20, y + 16, 'ветер', C.WIND, 'start', 11)}`;
+  return `<g opacity="0.95">${one(-11, len * 0.75)}${one(0, len)}${one(11, len * 0.75)}</g>${pill(x, y + len + 18, 'ветер', C.WIND, 'middle', 11)}`;
 }
 
 // Inflatable buoy with a highlight and a soft shadow.
@@ -81,3 +81,6 @@ export function boatTop(x, y, hdg, color = C.RIGHT, rel = 0, opts = {}) {
 }
 
 export const route = (d, c = C.MUTED, w = 2, dash = '6 5') => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-dasharray="${dash}" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+// Point at distance `len` along compass bearing `brg` (0 = up the page) from (x, y).
+export const at = (x, y, brg, len) => [x + Math.sin(brg * Math.PI / 180) * len, y - Math.cos(brg * Math.PI / 180) * len];

@@ -192,7 +192,7 @@ svg = f'''<svg class="boatArt" viewBox="0 0 960 680" preserveAspectRatio="xMidYM
         <clipPath id="hullClip"><path d="{hull}"/></clipPath>
         <clipPath id="deckClip"><path d="{above_sheer}"/></clipPath>
         <linearGradient id="topsides" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.7" stop-color="#eef2f6"/><stop offset="1" stop-color="#d9e1e9"/></linearGradient>
-        <linearGradient id="bottom" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b3550"/><stop offset="1" stop-color="#10233a"/></linearGradient>
+        <linearGradient id="bottom" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34587d"/><stop offset="1" stop-color="#284766"/></linearGradient>
         <linearGradient id="mainG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e6ecf1"/><stop offset="0.35" stop-color="#ffffff"/><stop offset="1" stop-color="#e1e8ee"/></linearGradient>
         <linearGradient id="jibG" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#e4eaf0"/><stop offset="0.4" stop-color="#fbfcfd"/><stop offset="1" stop-color="#dde4eb"/></linearGradient>
         <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d2c44"/><stop offset="1" stop-color="#071a2b"/></linearGradient>
@@ -247,9 +247,9 @@ svg = f'''<svg class="boatArt" viewBox="0 0 960 680" preserveAspectRatio="xMidYM
       <path d="M{P(-0.02, SHEER_BOW - 0.02)} L{P(-0.32, SHEER_BOW - 0.06)} L{P(-0.3, SHEER_BOW - 0.16)} L{P(-0.02, SHEER_BOW - 0.14)} Z" fill="#c3ced7"/>
       <circle cx="{f(X(-0.3))}" cy="{f(Y(SHEER_BOW - 0.11))}" r="2.3" fill="#8e9daa"/>
 
-      <path d="{keel}" fill="url(#bottom)" stroke="#2a4a66" stroke-width="0.8"/>
-      <path d="{bulb}" fill="#132a42" stroke="#2a4a66" stroke-width="0.8"/>
-      <path d="{rudder}" fill="url(#bottom)" stroke="#2a4a66" stroke-width="0.8"/>
+      <path d="{keel}" fill="#5b7fa3" stroke="#b3cfe9" stroke-width="1"/>
+      <path d="{bulb}" fill="#5b7fa3" stroke="#b3cfe9" stroke-width="1"/>
+      <path d="{rudder}" fill="#6f93b8" stroke="#c3dbf0" stroke-width="1"/>
 
       <g stroke="#5fa8d3" stroke-width="0.9" fill="none" marker-start="url(#tk)" marker-end="url(#tk)">
         {dim(X(LOA), 664, STEM, 664)}
