@@ -384,6 +384,14 @@ function sternView() {
 
 // ---------------------------------------------------------------- page
 const card = (title, sub) => ({ title, sub });
+// Bottom of every topic: previous topic, contents, next topic.
+function pager(sections, i) {
+  const prev = sections[i - 1], next = sections[i + 1];
+  return `<nav class="lpager">${prev ? `<button data-ltab="${prev[0]}" class="lprev"><span>← Назад</span><b>${prev[1]}</b></button>` : '<i></i>'}`
+    + `<button data-ltab="toc" class="ltocbtn" aria-label="Содержание">☰</button>`
+    + `${next ? `<button data-ltab="${next[0]}" class="lnext"><span>Дальше →</span><b>${next[1]}</b></button>` : '<i></i>'}</nav>`;
+}
+
 export function learnHtml(boatSvg) {
   const sections = [
     ['basics', 'Основы: как ходит яхта', 'галсы вверх и вниз', `
@@ -441,7 +449,7 @@ export function learnHtml(boatSvg) {
   const toc = `<section data-lpane="toc" class="on"><div class="ltoc">${sections.map(([id, t, sub]) => `<button data-ltab="${id}"><b>${t}</b><span>${sub}</span></button>`).join('')}</div></section>`;
   return `
     <div class="lhead"><button data-ltab="toc" class="lhome on" aria-label="Содержание">☰</button><nav class="ltabs">${sections.map(([id, t]) => `<button data-ltab="${id}">${t}</button>`).join('')}</nav><button data-act="closeLearn" class="lclose" aria-label="Закрыть">✕</button></div>
-    <div class="lbody">${toc}${sections.map(([id, t, , html]) => `<section data-lpane="${id}"><h2>${t}</h2>${html}</section>`).join('')}</div>`;
+    <div class="lbody">${toc}${sections.map(([id, t, , html], i) => `<section data-lpane="${id}"><h2>${t}</h2>${html}${pager(sections, i)}</section>`).join('')}</div>`;
 }
 
 // Callout labels in two columns: sorted by height and spaced so they never overlap.

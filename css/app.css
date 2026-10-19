@@ -344,3 +344,11 @@ body { grid-template-columns: minmax(0, 1fr); }
 
 .lsteps { padding-left: 22px; margin: 6px 0 10px; }
 .lsteps li { margin: 0 0 8px; color: #c9d8e6; line-height: 1.5; }
+
+.lpager { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; margin: 22px 0 6px; padding-top: 12px; border-top: 1px solid var(--border); }
+.lpager button { min-height: 56px; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 6px 12px; text-align: left; }
+.lpager .lnext { text-align: right; align-items: flex-end; }
+.lpager .lprev { align-items: flex-start; }
+.lpager span { font-size: 12px; color: var(--muted); }
+.lpager b { font-size: 14px; line-height: 1.25; }
+.lpager .ltocbtn { min-width: 56px; align-items: center; font-size: 20px; }
