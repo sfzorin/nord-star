@@ -1,25 +1,12 @@
 // Illustrations for the "Учебник" (top views unless noted). Plain SVG strings, no external assets.
 
-const WIND = '#4fc3f7', A = '#ffb020', B = '#4a8dff', OK = '#34e27a', TXT = '#eaf3fb', MUTED = '#7e98b0', WARN = '#ff7a6b';
-const svg = (w, h, body, label = '') => `<svg class="lsvg" viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}">${body}</svg>`;
-const t = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.size || 12}" fill="${o.fill || TXT}" text-anchor="${o.anchor || 'start'}"${o.bold ? ' font-weight="700"' : ''}>${s}</text>`;
-const arrow = (x1, y1, x2, y2, c = WIND, w = 3) => {
-  const a = Math.atan2(y2 - y1, x2 - x1), h = 9;
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}"/>`
-    + `<path d="M${x2 - h * Math.cos(a - 0.45)},${y2 - h * Math.sin(a - 0.45)} L${x2},${y2} L${x2 - h * Math.cos(a + 0.45)},${y2 - h * Math.sin(a + 0.45)}" fill="none" stroke="${c}" stroke-width="${w}"/>`;
-};
-const wind = (x = 22, y = 8) => arrow(x, y, x, y + 40) + t(x + 8, y + 14, 'ветер', { fill: WIND });
-// Boat from above; `rel` = wind angle on the bow (+ starboard tack). Sail curve to leeward.
-function boat(x, y, hdg, color = B, rel = null, sail = true) {
-  const r = rel ?? 0;
-  const ang = Math.abs(r) < 60 ? 12 : Math.abs(r) < 120 ? 45 : 78;
-  const side = r >= 0 ? -1 : 1;
-  const ex = side * Math.sin(ang * Math.PI / 180) * 19, ey = -3 + Math.cos(ang * Math.PI / 180) * 19;
-  return `<g transform="translate(${x},${y}) rotate(${hdg})"><path d="M0,-20 C8,-12 9,6 6,18 L-6,18 C-9,6 -8,-12 0,-20 Z" fill="${color}" stroke="#0b1622" stroke-width="1.2"/>`
-    + (sail ? `<path d="M0,-3 Q${(ex / 2 + side * 5).toFixed(1)},${(ey / 2).toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>` : '') + '</g>';
-}
-const mark = (x, y, c = '#ff7a1a') => `<circle cx="${x}" cy="${y}" r="7" fill="${c}" stroke="#fff" stroke-width="2"/>`;
-const path = (d, c = MUTED, w = 2, dash = '5 4') => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-dasharray="${dash}"/>`;
+import { C, svg, text as t, arrow, wind as kWind, buoy, boatTop, route as path } from './learnkit.js?v=8';
+
+const { WIND, OK, TXT, MUTED, WARN } = C, A = C.GIVE, B = C.RIGHT;
+const wind = (x = 22, y = 8) => kWind(x + 8, y + 6, 180, 36);
+const boat = (x, y, hdg, color = B, rel = null, sail = true, scale) => boatTop(x, y, hdg, color, rel ?? 0, { noSail: sail === false, scale });
+const mark = (x, y) => buoy(x, y);
+void TXT;
 
 export const ART = {
   // How sail + keel make the boat go forward.
@@ -36,6 +23,7 @@ export const ART = {
     ${mark(180, 40)}${t(192, 44, 'наветренный знак')}${mark(165, 268)}${mark(195, 268)}${t(205, 272, 'ворота')}
     ${path('M175,298 L120,236 L205,154 L150,96 L180,48', B, 2.4, '')}
     ${path('M188,48 L250,120 L170,190 L225,262 L198,268', A, 2.4, '6 4')}
+    ${boat(147, 267, -42, B, 42, true, 0.72)}${boat(162, 195, 46, B, -46, true, 0.72)}${boat(219, 84, 139, A, -139, true, 0.72)}${boat(210, 155, -131, A, 131, true, 0.72)}
     ${t(60, 180, 'вверх: зигзаг', { fill: B, bold: true })}${t(60, 196, 'поворотами', { fill: B })}${t(60, 210, 'оверштаг', { fill: B })}
     ${t(262, 180, 'вниз: тоже', { fill: A, bold: true })}${t(262, 196, 'галсами, через', { fill: A })}${t(262, 210, 'фордевинды', { fill: A })}
     `, 'Лавировка галсами вверх и вниз'),

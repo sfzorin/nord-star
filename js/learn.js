@@ -4,26 +4,20 @@ import { ART, KNOT_ART } from './learnart.js?v=8';
 // Rules are summarised in our own words from the Racing Rules of Sailing 2025–2028 (World Sailing);
 // the official text always prevails.
 
-// ---------------------------------------------------------------- tiny SVG kit
-const WIND = '#4fc3f7', RIGHT = '#4a8dff', GIVE = '#ffb020', TXT = '#eaf3fb', MUTED = '#7e98b0';
+// ---------------------------------------------------------------- drawing (shared kit)
+import { C as K, svg as kSvg, wind as kWind, buoy, boatTop, pill } from './learnkit.js?v=8';
+const WIND = K.WIND, RIGHT = K.RIGHT, GIVE = K.GIVE, TXT = K.TXT, MUTED = K.MUTED;
 
-// Boat seen from above: bow points along `hdg` (0 = up the page), sail on the leeward side.
+// Boat from above, bow along `hdg`; wind FROM opts.wind (default north). Label on a pill.
 function boat(x, y, hdg, color, label, opts = {}) {
-  const wind = opts.wind ?? 0;                     // wind comes FROM this direction
-  const rel = ((wind - hdg + 540) % 360) - 180;    // >0: wind over starboard
-  const boom = opts.boom ?? (Math.abs(rel) < 60 ? 12 : Math.abs(rel) < 110 ? 40 : 75);
-  const side = rel >= 0 ? -1 : 1;                  // sail swings to leeward
-  const lbl = label ? `<text x="${x}" y="${y + (opts.lblDy ?? 34)}" text-anchor="middle" font-size="13" font-weight="700" fill="${color}">${label}</text>` : '';
-  return `<g transform="translate(${x},${y}) rotate(${hdg})">
-      <path d="M0,-20 C8,-12 9,6 6,18 L-6,18 C-9,6 -8,-12 0,-20 Z" fill="${color}" stroke="#0b1622" stroke-width="1.2"/>
-      <line x1="0" y1="-4" x2="${(side * Math.sin(boom * Math.PI / 180) * 18).toFixed(1)}" y2="${(-4 + Math.cos(boom * Math.PI / 180) * 18).toFixed(1)}" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
-    </g>${lbl}`;
+  const w = opts.wind ?? 0;
+  const rel = ((w - hdg + 540) % 360) - 180;          // + = wind over starboard
+  const boomDeg = opts.boom != null ? opts.boom : undefined;
+  return boatTop(x, y, hdg, color, rel, { boomDeg, scale: opts.scale }) + (label ? pill(x, y + (opts.lblDy ?? 36), label, color) : '');
 }
-const windArrow = (x, y, len = 46) => `<g><line x1="${x}" y1="${y}" x2="${x}" y2="${y + len}" stroke="${WIND}" stroke-width="3"/>
-    <path d="M${x - 7},${y + len - 10} L${x},${y + len} L${x + 7},${y + len - 10}" fill="none" stroke="${WIND}" stroke-width="3"/>
-    <text x="${x + 10}" y="${y + 14}" font-size="12" fill="${WIND}">ветер</text></g>`;
-const mark = (x, y, label = '') => `<circle cx="${x}" cy="${y}" r="7" fill="#ff7a1a" stroke="#fff" stroke-width="2"/>${label ? `<text x="${x + 11}" y="${y + 4}" font-size="12" fill="${TXT}">${label}</text>` : ''}`;
-const svg = (w, h, body) => `<svg class="lsvg" viewBox="0 0 ${w} ${h}" role="img">${body}</svg>`;
+const windArrow = (x, y, len = 46) => kWind(x + 8, y + 8, 180, len - 8);
+const mark = (x, y, label = '') => buoy(x, y) + (label ? pill(x + 14, y + 5, label, TXT, 'start', 11) : '');
+const svg = (w, h, body) => kSvg(w, h, body);
 const legend = `<div class="llegend"><span style="color:${RIGHT}">■ право дороги</span><span style="color:${GIVE}">■ уступает</span><span style="color:${WIND}">↓ ветер</span></div>`;
 
 // ---------------------------------------------------------------- diagrams
@@ -61,10 +55,11 @@ const D = {
   r13: svg(360, 200, `${windArrow(20, 8, 40)}
     ${boat(130, 120, 0, GIVE, 'в повороте', { lblDy: 38, boom: 0 })}${boat(230, 130, -42, RIGHT, 'на курсе', { lblDy: 38 })}`),
   r18: svg(360, 260, `${windArrow(20, 8, 40)}
-    <circle cx="200" cy="140" r="95" fill="none" stroke="${WIND}" stroke-dasharray="6 5" opacity="0.7"/>
-    <text x="200" y="38" text-anchor="middle" font-size="12" fill="${WIND}">зона: 3 длины корпуса</text>${mark(200, 140)}
-    ${boat(150, 205, 140, RIGHT, 'внутренняя', { lblDy: 36 })}${boat(118, 190, 140, GIVE, 'внешняя', { lblDy: -24 })}
-    <text x="200" y="252" text-anchor="middle" font-size="11" fill="${MUTED}">в зоне с перекрытием: внешняя даёт внутренней место у знака</text>`),
+    <circle cx="200" cy="155" r="96" fill="#6fd0ff" fill-opacity="0.05" stroke="${WIND}" stroke-dasharray="6 5" opacity="0.8"/>
+    ${pill(200, 52, 'зона: 3 длины корпуса', WIND)}${mark(200, 155)}
+    <path d="M176,96 C188,124 196,140 205,150 C214,160 210,178 196,190" fill="none" stroke="${RIGHT}" stroke-width="2" stroke-dasharray="5 4"/>
+    ${boat(176, 96, 155, RIGHT, '', { scale: 0.62 })}${boat(154, 108, 155, GIVE, '', { scale: 0.62 })}
+    ${pill(232, 98, 'внутренняя', RIGHT, 'start')}${pill(140, 84, 'внешняя', GIVE, 'end')}`),
   start: svg(360, 230, `${windArrow(20, 8, 40)}
     <line x1="70" y1="120" x2="300" y2="120" stroke="#ffb020" stroke-width="3"/>
     <circle cx="70" cy="120" r="8" fill="#ffb020" stroke="#fff" stroke-width="2"/><text x="55" y="145" font-size="12" fill="#ffb020">пин</text>
@@ -396,6 +391,9 @@ export function labeledBoat(src) {
     return `<circle cx="${x}" cy="${y}" r="3" fill="#ffb020"/><line x1="${x}" y1="${y}" x2="${lx}" y2="${y}" stroke="#ffb020" stroke-width="1"/>`
       + `<text x="${lx + (dir > 0 ? 4 : -4)}" y="${y + 4}" text-anchor="${dir > 0 ? 'start' : 'end'}" font-family="system-ui,Arial" font-size="15" font-weight="700" fill="#ffd27a" stroke="#071523" stroke-width="3" paint-order="stroke">${name}</text>`;
   }).join('');
+  // Own ids for the copy: the original sits on the (hidden) home page, and references into a hidden SVG
+  // don't render (clip paths, gradients).
+  src = src.replace(/id="([^"]+)"/g, 'id="$1L"').replace(/url\(#([^)]+)\)/g, 'url(#$1L)');
   return src.replace(/viewBox="[^"]*"/, 'viewBox="420 20 540 650"').replace('class="boatArt"', 'class="lboatSvg"').replace('</svg>', `${lines}</svg>`);
 }
 
