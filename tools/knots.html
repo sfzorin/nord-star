@@ -1,0 +1,12 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knot preview</title>
+<!-- Dev page: every knot step at a large size (serve with tools/serve.py, open /tools/knots.html?k=Булинь). -->
+<style>body { margin: 0; background: #000; } svg { display: block; width: 100%; height: auto; margin: 0 0 4px; }</style>
+<div id="out"></div>
+<script type="module">
+  const { KNOT_ART } = await import('../js/knots.js?v=8&t=' + Date.now());
+  const want = new URLSearchParams(location.search).get('k');
+  document.getElementById('out').innerHTML = Object.entries(KNOT_ART).filter(([k]) => !want || want.split(',').includes(k)).map(([, v]) => v).join('');
+</script>
