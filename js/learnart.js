@@ -51,12 +51,15 @@ export const ART = {
     ${t(70, 128, 'экипаж на наветренном', { fill: A })}${t(70, 142, 'борту — меньше крен', { fill: A })}
     ${t(250, 230, 'киль с бульбом выпрямляет яхту', { anchor: 'middle', size: 11, fill: MUTED })}`, 'Крен и откренка'),
 
-  // True + boat speed = apparent wind.
-  apparent: svg(360, 220, `
-    ${arrow(90, 30, 90, 160, WIND, 3)}${t(98, 60, 'истинный', { fill: WIND })}
-    ${arrow(230, 60, 230, 160, MUTED, 3)}${t(238, 90, 'встречный от хода', { fill: MUTED })}
-    ${arrow(150, 30, 230, 160, OK, 3.5)}${t(160, 110, 'вымпельный', { fill: OK, bold: true })}
-    `, 'Вымпельный ветер'),
+  // True + boat speed = apparent wind: head-to-tail vector sum.
+  apparent: svg(360, 250, `
+    ${boat(300, 175, 0, B, 90)}${arrow(300, 140, 300, 92, '#fff', 2.5)}${t(312, 112, 'ход яхты', { size: 11 })}
+    ${arrow(250, 60, 140, 60, WIND, 3)}${t(195, 50, 'истинный ветер', { anchor: 'middle', fill: WIND })}
+    ${arrow(140, 60, 140, 160, MUTED, 3)}${t(132, 105, 'встречный', { anchor: 'end', fill: MUTED })}${t(132, 119, 'от хода', { anchor: 'end', fill: MUTED })}
+    ${arrow(250, 60, 140, 160, OK, 3.5)}${t(205, 128, 'вымпельный', { fill: OK, bold: true })}
+    <circle cx="250" cy="60" r="3" fill="${TXT}"/>
+    ${t(20, 200, 'вымпельный = истинный + встречный', { bold: true })}
+    ${t(20, 218, 'дует острее (больше с носа) и сильнее истинного', { size: 11, fill: MUTED })}`, 'Сложение истинного и встречного ветра'),
 
   // Telltales on the jib luff.
   telltales: svg(360, 190, ['Правильно', 'Слишком остро', 'Слишком полно'].map((name, i) => {
