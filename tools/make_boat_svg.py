@@ -3,8 +3,8 @@
 
 Dimensions: IRC/ORC certificates (LOA 10.99, LWL 9.97, T 2.20, J 4.06, IG 14.14, P 13.98, E 4.87, BAS 1.64).
 Hull look from photos of the Dufour 36 Performance: plumb stem, straight sheer, ~1.3 m freeboard, vertical
-transom with almost no overhang, dark hull-window strips, very low coachroof with a window band, spray hood,
-twin wheels, thin boot line, two swept spreaders, backstay, boom with lazy bag.
+transom with almost no overhang, dark hull-window strips, very low coachroof with a window band,
+twin wheels (no spray hood), thin boot line, two swept spreaders, backstay, boom with lazy bag.
 Run:  python3 tools/make_boat_svg.py
 """
 import os
@@ -52,18 +52,15 @@ jseams = ''.join(
 
 # --- hull: plumb stem, straight sheer, transom bottom just above the WL, LWL ends 1 m forward of it
 lwl_aft = X(9.97)
-hull = (f'M{f(STEM)},{f(sheer_bow)} L{f(STEM)},{f(WL)} C{f(STEM - 3)},{f(WL + 7)} {f(STEM - 20)},{f(WL + 11)} {f(X(1.6))},{f(WL + 12)} '
-        f'L{f(X(8.2))},{f(WL + 11)} C{f(X(9.2))},{f(WL + 9)} {f(lwl_aft + 6)},{f(WL + 4)} {f(lwl_aft)},{f(WL)} '
-        f'Q{f(X(10.5))},{f(Y(0.12))} {f(stern)},{f(Y(0.16))} L{f(stern)},{f(sheer_aft)} Z')
+# Underwater: deep forefoot under the plumb stem, flat canoe body, long straight run rising to the
+# wide transom whose lower edge sits right at the waterline.
+hull = (f'M{f(STEM)},{f(sheer_bow)} L{f(STEM)},{f(WL)} C{f(STEM - 3)},{f(WL + 7)} {f(STEM - 22)},{f(WL + 11)} {f(X(1.8))},{f(WL + 11.5)} '
+        f'L{f(X(5.5))},{f(WL + 11.5)} C{f(X(7.6))},{f(WL + 11)} {f(X(9.6))},{f(WL + 4)} {f(stern)},{f(WL - 1)} '
+        f'L{f(stern)},{f(sheer_aft)} Z')
 win = lambda a, b, h=0.72, t=0.11: f'<rect x="{f(X(b))}" y="{f(Y(h) - t * S / 2)}" width="{f((b - a) * S)}" height="{f(t * S)}" rx="1.2"/>'
 hull_windows = win(0.85, 5.1) + win(5.25, 6.0) + win(6.15, 10.85)
 roof = (f'M{f(X(2.9))},{f(sheer_bow + 0.5)} C{f(X(3.0))},{f(sheer_bow - 4)} {f(X(3.3))},{f(sheer_bow - 5.5)} {f(X(3.8))},{f(sheer_bow - 5.5)} '
         f'L{f(X(7.7))},{f(sheer_bow - 5)} C{f(X(7.95))},{f(sheer_bow - 4.5)} {f(X(8.1))},{f(sheer_bow - 2)} {f(X(8.1))},{f(sheer_aft + 0.5)} Z')
-# Spray hood: rounded canvas box over the companionway, ~0.9 m above deck.
-hood = (f'M{f(X(6.35))},{f(sheer_bow - 5)} C{f(X(6.45))},{f(Y(2.0))} {f(X(6.7))},{f(Y(2.2))} {f(X(7.0))},{f(Y(2.2))} '
-        f'L{f(X(7.95))},{f(Y(2.12))} C{f(X(8.15))},{f(Y(2.1))} {f(X(8.25))},{f(Y(1.9))} {f(X(8.25))},{f(sheer_aft)} '
-        f'L{f(X(7.7))},{f(sheer_aft - 0.5)} L{f(X(7.6))},{f(sheer_bow - 4)} Z')
-hood_win = f'M{f(X(6.55))},{f(Y(1.75))} C{f(X(6.65))},{f(Y(2.02))} {f(X(6.85))},{f(Y(2.08))} {f(X(7.1))},{f(Y(2.08))} L{f(X(7.1))},{f(Y(1.75))} Z'
 stanchions = ''.join(f'<line x1="{f(X(m))}" y1="{f(Y(1.3))}" x2="{f(X(m))}" y2="{f(Y(1.3) - 0.62 * S)}"/>' for m in (1.0, 2.6, 4.2, 5.8, 7.4, 8.9))
 wheels = ''.join(f'<ellipse cx="{f(X(m))}" cy="{f(sheer_aft - 13)}" rx="2.6" ry="12" fill="none" stroke="#9db4c6" stroke-width="1.6"/>' for m in (9.35, 9.75))
 grid = (''.join(f'<line x1="{x}" y1="20" x2="{x}" y2="590"/>' for x in range(330, 720, 26))
@@ -109,8 +106,6 @@ svg = f'''<svg class="boatArt" viewBox="0 0 900 600" preserveAspectRatio="xMidYM
       <line x1="{f(stern)}" y1="{f(sheer_aft)}" x2="{f(STEM)}" y2="{f(sheer_bow)}" stroke="#d9e2ea" stroke-width="1.6"/>
       <path d="{roof}" fill="#eef2f6" stroke="#9fb3c4" stroke-width="0.8"/>
       <rect x="{f(X(7.4))}" y="{f(sheer_bow - 4)}" width="{f(3.9 * S)}" height="2.4" rx="1.2" fill="#2a3540"/>
-      <path d="{hood}" fill="#c4d0da" stroke="#9fb3c4" stroke-width="0.8"/>
-      <path d="{hood_win}" fill="#5d7489" opacity="0.8"/>
       <g stroke="#9db4c6" stroke-width="1">{stanchions}</g>
       <polyline points="{f(X(0.25))},{f(sheer_bow)} {f(X(0.3))},{f(Y(1.95))} {f(X(8.9))},{f(Y(1.92))}" fill="none" stroke="#9db4c6" stroke-width="0.9" opacity="0.8"/>
       <path d="M{f(stern + 1)},{f(sheer_aft)} L{f(stern + 1)},{f(Y(1.95))} L{f(X(9.9))},{f(Y(1.95))}" fill="none" stroke="#9db4c6" stroke-width="1.1"/>
@@ -119,7 +114,7 @@ svg = f'''<svg class="boatArt" viewBox="0 0 900 600" preserveAspectRatio="xMidYM
       <text x="{f(X(3.2))}" y="{f(Y(0.25))}" font-family="system-ui,Arial" font-weight="800" font-size="8.5" letter-spacing="1.2" fill="#2a3540">NORD STAR</text>
       <path d="M526,486 L519,517 L505,518 L498,486 Z" fill="#162f46"/>
       <ellipse cx="512" cy="521" rx="30" ry="6.5" fill="#162f46"/>
-      <path d="M{f(X(9.15))},{f(WL + 12)} L{f(X(9.65))},{f(WL + 11)} L{f(X(9.55))},{f(Y(-1.65))} L{f(X(9.25))},{f(Y(-1.62))} Z" fill="#162f46"/>
+      <path d="M{f(X(9.1))},{f(WL + 6)} L{f(X(9.6))},{f(WL + 4)} L{f(X(9.5))},{f(Y(-1.65))} L{f(X(9.2))},{f(Y(-1.62))} Z" fill="#162f46"/>
       <g stroke="#5fa8d3" stroke-width="0.9" fill="none" marker-start="url(#tk)" marker-end="url(#tk)">
         <line x1="{f(stern)}" y1="572" x2="{f(STEM)}" y2="572"/>
         <line x1="{f(lwl_aft)}" y1="550" x2="{f(STEM)}" y2="550"/>
