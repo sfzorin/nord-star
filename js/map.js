@@ -3,6 +3,14 @@
 import { VENUES } from './venues.js?v=8';
 
 const toLL = (p) => [p.lat, p.lon];
+// Start → finish: teal, blue, violet, magenta, orange.
+const STOPS = [[0, 179, 164], [47, 123, 255], [138, 63, 252], [224, 41, 143], [255, 106, 0]];
+function routeColor(t) {
+  const x = Math.min(0.9999, Math.max(0, t)) * (STOPS.length - 1);
+  const i = Math.floor(x), f = x - i;
+  const c = STOPS[i].map((v, k) => Math.round(v + (STOPS[i + 1][k] - v) * f));
+  return `rgb(${c.join(',')})`;
+}
 const fromLL = (ll) => ({ lat: ll.lat, lon: ll.lng });
 const icon = (html, cls, size, anchor) => L.divIcon({ html, className: `mk ${cls}`, iconSize: size, iconAnchor: anchor });
 
@@ -60,7 +68,8 @@ export class RaceMap {
     this.vector = L.polyline([], { color: '#ffffff', weight: 2, dashArray: '4 5', interactive: false }).addTo(map);
     this.toMark = L.polyline([], { color: '#9cff57', weight: 1.5, dashArray: '2 7', interactive: false }).addTo(map);
     this.crossPt = L.circleMarker([0, 0], { radius: 7, color: '#9cff57', weight: 3, fill: false, interactive: false });
-    this.route = L.polyline([], { color: '#c77dff', weight: 3, opacity: 0.85, dashArray: '10 6', interactive: false }).addTo(map);
+    this.route = L.layerGroup().addTo(map);
+    this.routeSig = '';
     this.islandsLayer = L.layerGroup().addTo(map);
     this.islandsSig = '';
     this.hazLayer = L.layerGroup().addTo(map);
@@ -124,8 +133,27 @@ export class RaceMap {
     if (follow) this.map.panTo(toLL(fix), { animate: false });
   }
 
+  // Course line coloured start → finish along a gradient, so legs running side by side differ in colour.
   setRoute(pts, islands) {
-    this.route.setLatLngs(pts.map(toLL));
+    const rsig = JSON.stringify(pts.map((p) => [p.lat.toFixed(5), p.lon.toFixed(5)]));
+    if (rsig !== this.routeSig) {
+      this.routeSig = rsig;
+      this.route.clearLayers();
+      const d = [0];
+      for (let i = 1; i < pts.length; i++) d.push(d[i - 1] + this.map.distance(toLL(pts[i - 1]), toLL(pts[i])));
+      const total = d[d.length - 1] || 1;
+      const STEP = 120; // m per colour step
+      for (let i = 1; i < pts.length; i++) {
+        const n = Math.max(1, Math.ceil((d[i] - d[i - 1]) / STEP));
+        for (let k = 0; k < n; k++) {
+          const t0 = k / n, t1 = (k + 1) / n;
+          const a = [pts[i - 1].lat + (pts[i].lat - pts[i - 1].lat) * t0, pts[i - 1].lon + (pts[i].lon - pts[i - 1].lon) * t0];
+          const b = [pts[i - 1].lat + (pts[i].lat - pts[i - 1].lat) * t1, pts[i - 1].lon + (pts[i].lon - pts[i - 1].lon) * t1];
+          const t = (d[i - 1] + (d[i] - d[i - 1]) * (k + 0.5) / n) / total;
+          L.polyline([a, b], { color: routeColor(t), weight: 4, opacity: 0.95, lineCap: 'butt', interactive: false }).addTo(this.route);
+        }
+      }
+    }
     const sig = JSON.stringify(islands.map((i) => [i.hull[0], i.side]));
     if (sig === this.islandsSig) return;
     this.islandsSig = sig;
