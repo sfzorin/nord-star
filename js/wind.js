@@ -195,7 +195,7 @@ export class WindEstimator {
   }
 
   // Wind from the boat's wind sensor (via the instruments gateway); expires after 8 s without data.
-  setInstrument(w) { if (w) this.inst = { ...w, t: Date.now() }; }
+  setInstrument(w) { this.inst = w ? { ...w, t: Date.now() } : null; }
   get instLive() { return !!this.inst && Date.now() - this.inst.t < 8000; }
 
   // Effective wind used by the app: manual override, then the wind sensor, then the GPS estimate.

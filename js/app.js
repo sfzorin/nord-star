@@ -99,7 +99,7 @@ function instText() {
     const parts = [v('aws', (x) => `ветер ${x.toFixed(1)}`), v('stw', (x) => `лаг ${x.toFixed(1)}`), inst.heading(DECLINATION) != null ? `${Math.round(inst.heading(DECLINATION))}°` : null, v('depth', (x) => `${x.toFixed(1)} м`)].filter(Boolean);
     return [`на связи · ${parts.join(' · ') || 'данные идут'}`, 'good'];
   }
-  if (inst.state === 'error') return [`нет связи: ${inst.msg}`, 'bad'];
+  if (inst.state === 'error') return [inst.msg.startsWith('нет') ? inst.msg : `нет связи: ${inst.msg}`, 'bad'];
   if (inst.state === 'on') return ['подключено, ждём данные…', 'warn'];
   return [`подключение к ${st.set.instHost}:${st.set.instPort}…`, 'warn'];
 }
@@ -136,6 +136,7 @@ function startGps() {
 
 function onFix(fix) {
   R.fix = fix;
+  R.gpsErr = null;
   wind.add(fix);
   pollDepth(fix);
   if (fix.t - R.lastTrackT > 2000 && fix.sog > 0.3) {

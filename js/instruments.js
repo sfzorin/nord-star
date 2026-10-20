@@ -9,7 +9,8 @@ import { parse } from './nmea.js?v=8';
 
 const Cap = window.Capacitor;
 export const isNative = !!Cap?.isNativePlatform?.();
-const NmeaTcp = isNative ? Cap.registerPlugin('NmeaTcp') : null;
+// No bundler, so no @capacitor/core: the native bridge exposes the plugin proxy directly.
+const NmeaTcp = isNative ? (Cap.Plugins?.NmeaTcp ?? Cap.registerPlugin?.('NmeaTcp') ?? null) : null;
 
 const norm360 = (a) => ((a % 360) + 360) % 360;
 

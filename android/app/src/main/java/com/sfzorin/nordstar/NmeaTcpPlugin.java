@@ -128,7 +128,7 @@ public class NmeaTcpPlugin extends Plugin {
                 flush(pending);
                 if (running) status("error", "нет данных от " + where);
             } catch (IOException e) {
-                if (running) status("error", e.getMessage() == null ? "нет связи с " + where : e.getMessage());
+                if (running) status("error", "нет связи с " + where + " — планшет в Wi-Fi шлюза?");
             } finally {
                 socket = null;
             }
