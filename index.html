@@ -280,12 +280,21 @@
           <div class="set"><span>Огибание, м</span><input type="number" id="setRound" min="10" max="150"></div>
         </div>
       </div>
-      <details class="card"><summary>Поляра: <span id="polarSrc"></span></summary><table id="polarTable" class="polar"></table></details>
+      <details class="card instcard"><summary>Приборы: <span id="instStatus" class="inststat">выключено</span></summary>
+        <div class="instrow">
+          <label><input type="checkbox" id="setInstOn"> подключать</label>
+          <input type="text" id="setInstHost" inputmode="decimal" spellcheck="false" aria-label="Адрес шлюза">
+          <input type="number" id="setInstPort" min="1" max="65535" aria-label="Порт TCP">
+        </div>
+        <small class="hint">Шлюз Yacht Devices YDWG-02R: планшет в Wi-Fi «YDWG», адрес 192.168.4.1, порт 1456. Ветер с датчика, лаг, компас и эхолот заменяют оценку по GPS. Только в Android-приложении.</small>
+      </details>
+      <div id="polarBox" class="card" hidden><div class="lbl">Поляра: <span id="polarSrc"></span></div><table id="polarTable" class="polar"></table></div>
       <div class="btnrow">
+        <button data-act="polar" id="btnPolar">Поляра</button>
         <button data-act="gpx">Трек GPX</button>
         <button data-act="resetAll" class="danger">Сбросить всё</button>
       </div>
-      <div class="foot">Данные: карта © OpenStreetMap; глубины EMODnet / GEBCO 2024 (модель, не для навигации); прогноз Open-Meteo; дистанции — гоночные инструкции Göcek Yacht Club и MIYC.</div>
+      <div class="foot">Карта © OpenStreetMap · глубины EMODnet/GEBCO (модель, не для навигации) · прогноз Open-Meteo · дистанции GYC и MIYC</div>
     </section>
   </aside>
 </main>

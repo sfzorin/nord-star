@@ -1,0 +1,8 @@
+{
+  "appId": "com.sfzorin.nordstar",
+  "appName": "Nord Star",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#071523"
+  }
+}

@@ -101,7 +101,7 @@ button.on { background: var(--btn-on); border-color: var(--info); }
 /* course */
 .card { background: var(--tile); border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
 .entry { display: flex; align-items: center; gap: 6px; font-size: 18px; }
-.entry input, .entry select, .set input[type=number], .set select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-height: 44px; }
+.entry input, .entry select, .set input[type=number], .set input[type=text], .set select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-height: 44px; }
 .entry input { width: 90px; font-size: 22px; font-weight: 700; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chipc { display: inline-flex; align-items: center; gap: 4px; background: var(--tile); border: 1px solid var(--border); border-radius: 18px; padding: 4px 4px 4px 12px; font-weight: 600; }
@@ -352,3 +352,12 @@ body { grid-template-columns: minmax(0, 1fr); }
 .lpager span { font-size: 12px; color: var(--muted); }
 .lpager b { font-size: 14px; line-height: 1.25; }
 .lpager .ltocbtn { min-width: 56px; align-items: center; font-size: 20px; }
+
+.inststat { color: var(--muted); }
+.inststat.good { color: #3ee08a; } .inststat.warn { color: #ffb020; } .inststat.bad { color: #ff7a6b; }
+.instrow { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.instrow label { display: flex; align-items: center; gap: 6px; min-height: 44px; }
+.instrow input[type=checkbox] { width: 26px; height: 26px; }
+.instrow input[type=text], .instrow input[type=number] { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-height: 44px; color: inherit; font: inherit; }
+.instrow input[type=text] { width: 9em; } .instrow input[type=number] { width: 5.5em; }
+.card .hint { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.4; }

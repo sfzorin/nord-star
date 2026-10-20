@@ -194,14 +194,19 @@ export class WindEstimator {
     this.est = { twd, tws, src, conf, tackAngle, refs };
   }
 
-  // Effective wind used by the app (manual override wins).
-  get twd() { return this.manual.twd ?? this.est.twd ?? this.prior.twd; }
-  get tws() { return this.manual.tws ?? this.est.tws ?? this.prior.tws ?? 10; }
+  // Wind from the boat's wind sensor (via the instruments gateway); expires after 8 s without data.
+  setInstrument(w) { if (w) this.inst = { ...w, t: Date.now() }; }
+  get instLive() { return !!this.inst && Date.now() - this.inst.t < 8000; }
+
+  // Effective wind used by the app: manual override, then the wind sensor, then the GPS estimate.
+  get twd() { return this.manual.twd ?? (this.instLive ? this.inst.twd : null) ?? this.est.twd ?? this.prior.twd; }
+  get tws() { return this.manual.tws ?? (this.instLive ? this.inst.tws : null) ?? this.est.tws ?? this.prior.tws ?? 10; }
   get source() {
     if (this.manual.twd != null) return 'вручную';
+    if (this.instLive) return 'датчик ветра';
     return this.est.conf ? this.est.src : this.prior.src || 'нет данных';
   }
-  get conf() { return this.manual.twd != null ? 3 : this.est.conf || (this.prior.twd != null ? 1 : 0); }
+  get conf() { return this.manual.twd != null || this.instLive ? 3 : this.est.conf || (this.prior.twd != null ? 1 : 0); }
 
   // Lift (+) / header (−) of the current heading vs the mean of that tack.
   shift(cog, twa) {

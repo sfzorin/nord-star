@@ -5,6 +5,7 @@ import { Horn, StartTimer } from './timer.js?v=8';
 import { RealGPS } from './gps.js?v=8';
 import { RaceMap } from './map.js?v=8';
 import { WindEstimator } from './wind.js?v=8';
+import { Instruments, isNative } from './instruments.js?v=8';
 import { depthAt, getNav, setHazards } from './depth.js?v=8';
 import { DEFAULT_HAZARDS, hazardAhead } from './hazards.js?v=8';
 import { VENUES, venueAt } from './venues.js?v=8';
@@ -35,7 +36,7 @@ function defaults() {
     legIdx: 0,
     announcedBrg: null,
     manualWind: { twd: null, tws: null },
-    set: { sound: true, voice: true, preset: 300, bowOffset: 7, accelSec: 8, roundRadius: 40, follow: true },
+    set: { sound: true, voice: true, preset: 300, bowOffset: 7, accelSec: 8, roundRadius: 40, follow: true, instOn: isNative, instHost: '192.168.4.1', instPort: 1456 },
   };
 }
 
@@ -85,6 +86,23 @@ timer.onGun = () => {
 };
 
 const wind = new WindEstimator();
+
+// Boat instruments (wind sensor, log, compass, echo sounder) through the YDWG-02 Wi-Fi gateway.
+const inst = new Instruments();
+function startInstruments() {
+  if (st.set.instOn) inst.start(st.set.instHost, st.set.instPort); else inst.stop();
+}
+function instText() {
+  if (!st.set.instOn) return ['выключено', ''];
+  if (inst.live) {
+    const v = (k, f) => { const x = inst.fresh(k); return x == null ? null : f(x); };
+    const parts = [v('aws', (x) => `ветер ${x.toFixed(1)}`), v('stw', (x) => `лаг ${x.toFixed(1)}`), inst.heading(DECLINATION) != null ? `${Math.round(inst.heading(DECLINATION))}°` : null, v('depth', (x) => `${x.toFixed(1)} м`)].filter(Boolean);
+    return [`на связи · ${parts.join(' · ') || 'данные идут'}`, 'good'];
+  }
+  if (inst.state === 'error') return [`нет связи: ${inst.msg}`, 'bad'];
+  if (inst.state === 'on') return ['подключено, ждём данные…', 'warn'];
+  return [`подключение к ${st.set.instHost}:${st.set.instPort}…`, 'warn'];
+}
 wind.manual = { ...st.manualWind };
 function applyPriors() {
   const f = R.forecast;
@@ -157,6 +175,9 @@ function compute() {
   const now = Date.now();
   const D = { now, rem: timer.remaining(now) };
   const fix = R.fix;
+  wind.setInstrument(inst.trueWind(fix?.cog, DECLINATION));
+  D.stw = inst.fresh('stw');
+  D.depthReal = inst.fresh('depth', 5000);
   const twd = wind.twd, tws = wind.tws;
   D.twd = twd; D.tws = tws;
   D.beat = P.beat(tws); D.run = P.run(tws);
@@ -165,7 +186,8 @@ function compute() {
   const twa = G.norm180(twd - fix.cog);
   D.twa = twa;
   D.polarSpd = P.speed(tws, twa);
-  D.perf = D.polarSpd > 0.5 && fix.sog > 0.5 ? (fix.sog / D.polarSpd) * 100 : null;
+  const spd = D.stw ?? fix.sog; // polar speeds are through the water: use the log when we have one
+  D.perf = D.polarSpd > 0.5 && spd > 0.5 ? (spd / D.polarSpd) * 100 : null;
   const a = Math.abs(twa);
   D.target = a < 60 ? D.beat.speed : a > 120 ? D.run.speed : D.polarSpd;
   D.tackHdg = G.norm360(2 * twd - fix.cog);
@@ -398,7 +420,8 @@ function render(D) {
   }
 
   const dp = R.depth;
-  if (dp.here == null) set('depthChip', narrow ? '— м' : 'глуб. —', '');
+  if (D.depthReal != null) set('depthChip', `${narrow ? '' : 'эхолот '}${D.depthReal.toFixed(1)} м`, D.depthReal < SHALLOW ? 'bad' : D.depthReal < 10 ? 'warn' : 'good');
+  else if (dp.here == null) set('depthChip', narrow ? '— м' : 'глуб. —', '');
   else set('depthChip', narrow ? `${dp.here < 1 ? '<1' : Math.round(dp.here)} м` : `глуб. ${dp.here < 1 ? '<1' : Math.round(dp.here)} м${dp.ahead != null ? ` · впереди ${Math.round(dp.ahead)}` : ''}`,
     dp.here < SHALLOW || (dp.ahead != null && dp.ahead < SHALLOW) ? 'bad' : dp.here < 10 || (dp.ahead != null && dp.ahead < 10) ? 'warn' : '');
   // Alarms only for a boat under way on the water inside a charted venue: ashore, at the dock or
@@ -406,7 +429,8 @@ function render(D) {
   const underway = fix && fix.sog > 1.5 && venueAt(fix);
   const hzRaw = fix ? hazardAhead(st.hazards, fix) : null;
   const hz = hzRaw && (hzRaw.inside || underway) ? hzRaw : null;
-  const shallow = underway && dp.here != null && dp.here >= SHALLOW && dp.ahead != null && dp.ahead < SHALLOW;
+  const echoShallow = fix && fix.sog > 1 && D.depthReal != null && D.depthReal < BOAT.draft + 1.5;
+  const shallow = echoShallow || (underway && dp.here != null && dp.here >= SHALLOW && dp.ahead != null && dp.ahead < SHALLOW);
   const muted = D.now < (R.alarmMuteUntil || 0);
   $('shallowWarn').hidden = muted || (!hz && !shallow);
   if (hz) {
@@ -416,7 +440,7 @@ function render(D) {
     R.hazWarned = null;
   }
   if (shallow) {
-    if (!hz) set('shallowWarn', `МЕЛКО ВПЕРЕДИ · ${dp.ahead < 1 ? 'берег' : Math.round(dp.ahead) + ' м'} · осадка ${BOAT.draft} м`);
+    if (!hz) set('shallowWarn', echoShallow ? `МЕЛКО! Эхолот ${D.depthReal.toFixed(1)} м · осадка ${BOAT.draft} м` : `МЕЛКО ВПЕРЕДИ · ${dp.ahead < 1 ? 'берег' : Math.round(dp.ahead) + ' м'} · осадка ${BOAT.draft} м`);
     if (!muted && !dp.warned) { horn.beep(500, 0.5); horn.say('Мелко впереди'); dp.warned = true; }
   } else {
     dp.warned = false;
@@ -512,7 +536,7 @@ function renderRace(D) {
   set('vDst', dv); set('vDstU', du);
   set('vEta', M?.etaSec != null ? clock(D.now + M.etaSec * 1000).slice(0, 5) : '—');
   set('vEtaSub', M?.etaSec != null ? `через ${fmtSec(M.etaSec)}` : '');
-  set('vSog', fix ? fix.sog.toFixed(1) : '—');
+  set('vSog', D.stw != null ? D.stw.toFixed(1) : fix ? fix.sog.toFixed(1) : '—');
   const windOk = wind.conf >= 2;
   const perf = windOk && D.perf != null && D.perf <= 150 ? D.perf : null;
   set('vTarget', windOk && D.target != null ? `/ ${D.target.toFixed(1)}` : '');
@@ -540,6 +564,8 @@ function renderRace(D) {
 }
 
 function renderWind(D) {
+  const [it, ic] = instText();
+  set('instStatus', it, ic);
   set('vTwd', D.twd == null ? '—' : deg(D.twd));
   set('vTwdSub', `° ${['', '≈ из прогноза/азимута', '~ один галс', ''][wind.conf] || ''}`);
   set('vTws', Math.round(D.tws).toString());
@@ -550,7 +576,7 @@ function renderWind(D) {
     set('vTrendSub', Math.abs(tr) < 2 ? 'стабильно' : tr > 0 ? 'вправо' : 'влево');
   } else { set('vTrend', '—'); set('vTrendSub', 'копим данные'); }
   const e = wind.est;
-  set('windSrc', `Источник: ${wind.source}. ${wind.manual.twd != null ? '' : 'Ветер — биссектриса устойчивых курсов правого и левого галса за последние минуты.'}`);
+  set('windSrc', `Источник: ${wind.source}. ${wind.manual.twd != null ? '' : wind.instLive ? 'Истинный ветер с датчика на мачте через шлюз YDWG-02.' : 'Ветер — биссектриса устойчивых курсов правого и левого галса за последние минуты.'}`);
   set('vBeatA', `${Math.round(D.beat.angle)}°`); set('vBeatS', `${D.beat.speed.toFixed(1)} kn`);
   set('vRunA', `${Math.round(D.run.angle)}°`); set('vRunS', `${D.run.speed.toFixed(1)} kn`);
   set('vTackAngle', e.tackAngle ? String(Math.round(e.tackAngle)) : '—');
@@ -733,6 +759,9 @@ function renderBoat() {
   $('setBow').value = st.set.bowOffset;
   $('setAccel').value = st.set.accelSec;
   $('setRound').value = st.set.roundRadius;
+  $('setInstOn').checked = st.set.instOn;
+  $('setInstHost').value = st.set.instHost;
+  $('setInstPort').value = st.set.instPort;
 }
 
 function renderFollow() { $('btnFollow').classList.toggle('on', st.set.follow); }
@@ -925,6 +954,7 @@ const actions = {
   follow: () => { st.set.follow = !st.set.follow; save(); renderFollow(); if (st.set.follow && R.fix) map.center(R.fix); },
   fullscreen: () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); },
   gpx: exportGpx,
+  polar: () => { const b = $('polarBox'); b.hidden = !b.hidden; $('btnPolar').classList.toggle('on', !b.hidden); if (!b.hidden) b.scrollIntoView({ block: 'nearest' }); },
   resetAll: () => { if (confirm('Сбросить линию, знаки и настройки?')) { localStorage.removeItem(KEY); location.reload(); } },
 };
 
@@ -960,6 +990,9 @@ document.addEventListener('change', (ev) => {
     case 'setBow': st.set.bowOffset = +t.value || 0; break;
     case 'setAccel': st.set.accelSec = +t.value || 0; break;
     case 'setRound': st.set.roundRadius = +t.value || 40; break;
+    case 'setInstOn': st.set.instOn = t.checked; startInstruments(); break;
+    case 'setInstHost': st.set.instHost = t.value.trim() || '192.168.4.1'; startInstruments(); break;
+    case 'setInstPort': st.set.instPort = +t.value || 1456; startInstruments(); break;
     default: return;
   }
   save();
@@ -1032,6 +1065,7 @@ renderFollow();
 $('manualBox').hidden = wind.manual.twd == null;
 if (!window.isSecureContext) toast('Нет HTTPS: GPS, компас и запрет сна экрана не работают');
 startGps();
+startInstruments();
 fetchForecast();
 setInterval(fetchForecast, 30 * 60000);
 setInterval(() => {
@@ -1042,8 +1076,10 @@ setInterval(() => {
   R.lastD = D;
 }, 250);
 
-// Offline: cache the whole app in the browser (needs https or localhost).
-if ('serviceWorker' in navigator && window.isSecureContext) {
+// Offline: the Android app carries everything inside; the web version caches itself in the browser.
+if (isNative) {
+  $('offlineState').textContent = 'Приложение для Android · работает без интернета ✓';
+} else if ('serviceWorker' in navigator && window.isSecureContext) {
   // A new version took over: reload at once on the home screen, during a race only on request.
   const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -1064,4 +1100,4 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   $('offlineState').textContent = 'Офлайн недоступен: откройте по https';
 }
 
-window.__race = { st, R, wind, timer, map, feed: onFix }; // debugging: __race.feed(fix) injects a position
+window.__race = { st, R, wind, timer, map, inst, feed: onFix }; // debugging: __race.feed(fix) injects a position

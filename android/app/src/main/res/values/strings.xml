@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nord Star</string>
+    <string name="title_activity_main">Nord Star</string>
+    <string name="package_name">com.sfzorin.nordstar</string>
+    <string name="custom_url_scheme">com.sfzorin.nordstar</string>
+</resources>
